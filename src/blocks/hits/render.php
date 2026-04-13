@@ -31,6 +31,8 @@ $config = wp_json_encode( [
 	'imageSize'   => sanitize_text_field( $attributes['imageSize'] ?? 'thumbnail' ),
 	'hitTemplate' => $hit_template,
 	'hitsPerPage' => $hits_per_page,
+	'hideResultsOnEmptySearch' => (bool) ( $attributes['hideResultsOnEmptySearch'] ?? false ),
+	'emptySearchMessage' => sanitize_text_field( $attributes['emptySearchMessage'] ?? 'Enter a search or add a filter to see results.' ),
 ] );
 
 $extra_classes = $custom_class ? " $custom_class" : '';

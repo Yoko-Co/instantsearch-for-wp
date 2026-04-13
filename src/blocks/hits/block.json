@@ -22,6 +22,11 @@
 		},
 		"imageSize": { "type": "string", "default": "thumbnail" },
 		"hitsPerPage": { "type": "number", "default": 10 },
+		"hideResultsOnEmptySearch": { "type": "boolean", "default": false },
+		"emptySearchMessage": {
+			"type": "string",
+			"default": "Enter a search or add a filter to see results."
+		},
 		"tabletColumns": { "type": "number", "default": 2 },
 		"columns": { "type": "number", "default": 3 }
 	},

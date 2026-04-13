@@ -46,7 +46,16 @@ const TOKEN_REFERENCE = [
 ];
 
 export default function Edit( { attributes, setAttributes } ) {
-	const { showImage, imageSize, hitsPerPage, tabletColumns, columns, hitTemplate } = attributes;
+	const {
+		showImage,
+		imageSize,
+		hitsPerPage,
+		tabletColumns,
+		columns,
+		hitTemplate,
+		hideResultsOnEmptySearch,
+		emptySearchMessage,
+	} = attributes;
 	const [ customField, setCustomField ] = useState( '' );
 	const templateWrapRef = useRef( null );
 
@@ -148,6 +157,21 @@ export default function Edit( { attributes, setAttributes } ) {
 				</PanelBody>
 
 				<PanelBody title={ __( 'Display Options', 'instantsearch-for-wp' ) } initialOpen={ false }>
+					<ToggleControl
+						label={ __( 'Hide search results for empty search', 'instantsearch-for-wp' ) }
+						checked={ hideResultsOnEmptySearch }
+						onChange={ ( val ) => setAttributes( { hideResultsOnEmptySearch: val } ) }
+						help={ __( 'Do not run search until a query is entered or a filter is selected.', 'instantsearch-for-wp' ) }
+					/>
+					{ hideResultsOnEmptySearch && (
+						<TextControl
+							label={ __( 'Empty Search message', 'instantsearch-for-wp' ) }
+							value={ emptySearchMessage }
+							onChange={ ( val ) => setAttributes( { emptySearchMessage: val } ) }
+							placeholder={ __( 'Enter a search or add a filter to see results.', 'instantsearch-for-wp' ) }
+							help={ __( 'Shown before the first query or filter is applied.', 'instantsearch-for-wp' ) }
+						/>
+					) }
 					<ToggleControl
 						label={ __( 'Show featured image', 'instantsearch-for-wp' ) }
 						checked={ showImage }

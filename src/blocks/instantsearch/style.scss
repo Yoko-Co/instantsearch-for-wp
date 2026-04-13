@@ -9,6 +9,30 @@
 	color: var( --isfwp-color-text );
 }
 
+.isfwp-block-instance .isfwp-empty-search-message {
+	margin: 0 0 var( --isfwp-space-md );
+	padding: var( --isfwp-space-sm ) var( --isfwp-space-md );
+	border: var( --isfwp-border-width ) dashed var( --isfwp-color-border );
+	border-radius: var( --isfwp-radius-sm );
+	background: var( --isfwp-color-surface-alt );
+	color: var( --isfwp-color-text-muted );
+	font-size: var( --isfwp-font-size-sm );
+	line-height: 1.4;
+}
+
+.isfwp-block-instance.isfwp-empty-search-active [data-isfwp-widget="hits"],
+.isfwp-block-instance.isfwp-empty-search-active [data-isfwp-widget="pagination"],
+.isfwp-block-instance.isfwp-empty-search-active [data-isfwp-widget="stats"],
+.isfwp-block-instance.isfwp-empty-search-active [data-isfwp-widget="hitsPerPage"],
+.isfwp-block-instance.isfwp-empty-search-active [data-isfwp-widget="sortBy"] {
+	display: none;
+}
+
+.isfwp-block-instance.isfwp-hits-pending [data-isfwp-widget="hits"] {
+	visibility: hidden;
+	pointer-events: none;
+}
+
 /* Import base InstantSearch styles */
 .isfwp-block-instance .ais-Hits-list {
 	display: grid;
