@@ -142,16 +142,16 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 							}))}
 						/>
 						<TextControl
-							label={__('CSS Selector Triggers', 'instantsearch-for-wp')}
-							value={useSearchSettings?.sitesearch_settings?.css_selector_triggers || ''}
+							label={__('Search Trigger CSS Selectors', 'instantsearch-for-wp')}
+							help={__('Comma-separated CSS selectors for elements that open the search dialog when clicked. The .isfwp-search-trigger class is automatically added to the built-in floating button.', 'instantsearch-for-wp')}
+							value={useSearchSettings?.sitesearch_settings?.trigger_selectors ?? '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search'}
 							onChange={(value) => setUseSearchSettings((prev) => ({
 								...prev,
 								sitesearch_settings: {
 									...prev.sitesearch_settings,
-									css_selector_triggers: value,
+									trigger_selectors: value,
 								}
 							}))}
-							help={__('Enter CSS selectors for elements that should trigger the site search when clicked. Separate multiple selectors with commas.', 'instantsearch-for-wp')}
 						/>
 						<NumberControl
 							label={__('Debounce Delay (in milliseconds)', 'instantsearch-for-wp')}
@@ -165,19 +165,6 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 							}))}
 							help={__('Set a debounce delay for search input to improve performance. Enter the delay in milliseconds. Set to 0 to disable and only trigger search on enter key press.', 'instantsearch-for-wp')}
 						/>
-
-						<TextControl
-						label={__('Search Trigger CSS Selectors', 'instantsearch-for-wp')}
-						help={__('Comma-separated CSS selectors for elements that open the search dialog when clicked. The .isfwp-search-trigger class is automatically added to the built-in floating button.', 'instantsearch-for-wp')}
-						value={useSearchSettings?.sitesearch_settings?.trigger_selectors ?? '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search'}
-						onChange={(value) => setUseSearchSettings((prev) => ({
-							...prev,
-							sitesearch_settings: {
-								...prev.sitesearch_settings,
-								trigger_selectors: value,
-							}
-						}))}
-					/>
 
 					{/* TODO: Add hits template field. */}
 

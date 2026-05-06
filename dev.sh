@@ -155,8 +155,13 @@ cmd_test() {
   "${DC[@]}" run --rm wpcli option update siteurl "$WP_SITE_URL" >/dev/null 2>&1 || true
 
   info "Applying e2e plugin settings..."
+
+  local e2e_algolia_app_id="${ALGOLIA_APP_ID:-demo-app}"
+  local e2e_algolia_search_key="${ALGOLIA_SEARCH_ONLY_API_KEY:-demo-key}"
+  local e2e_algolia_admin_key="${ALGOLIA_ADMIN_API_KEY:-demo-admin-key}"
+
   "${DC[@]}" run --rm wpcli option update instantsearch_for_wp_settings \
-    '{"provider":"algolia","algolia":{"app_id":"demo-app","search_only_api_key":"demo-key","admin_api_key":"demo-admin-key"},"use_as_sitesearch":true,"sitesearch_settings":{"placeholder_text":"Search...","sidebar_position":"left","snippet_length":50,"css_selector_triggers":".isfwp-search-trigger","debounce_delay":0}}' \
+    "{\"provider\":\"algolia\",\"algolia\":{\"app_id\":\"${e2e_algolia_app_id}\",\"search_only_api_key\":\"${e2e_algolia_search_key}\",\"admin_api_key\":\"${e2e_algolia_admin_key}\"},\"use_as_sitesearch\":true,\"sitesearch_settings\":{\"placeholder_text\":\"Search...\",\"sidebar_position\":\"left\",\"snippet_length\":50,\"css_selector_triggers\":\".isfwp-search-trigger\",\"debounce_delay\":0}}" \
     --format=json >/dev/null 2>&1 || true
 
   info "Setting up Playwright..."

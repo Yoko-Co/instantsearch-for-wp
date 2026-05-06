@@ -151,8 +151,8 @@ class Settings {
 				'placeholder_text'      => __( 'Search...', 'instantsearch-for-wp' ),
 				'sidebar_position'      => 'left',
 				'snippet_length'        => 50,
-				'css_selector_triggers' => '',
-				'debounce_delay'        => 0,
+				'trigger_selectors' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
+				'debounce_delay'    => 0,
 			),
 		);
 
@@ -203,9 +203,9 @@ class Settings {
 							'type'    => 'integer',
 							'default' => 50,
 						),
-						'css_selector_triggers' => array(
+						'trigger_selectors' => array(
 							'type'    => 'string',
-							'default' => '',
+							'default' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
 						),
 						'debounce_delay' => array(
 							'type'    => 'integer',

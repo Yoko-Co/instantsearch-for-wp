@@ -171,7 +171,7 @@ class SiteSearch {
 					),
 					$taxonomy_titles
 				),
-				'searchTriggerQuerySelectors' => $settings['sitesearch_settings']['css_selector_triggers'] ?? '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
+				'searchTriggerQuerySelectors' => $settings['sitesearch_settings']['trigger_selectors'] ?? '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
 				'sitesearchSettings'          => $settings['sitesearch_settings'] ?? array(),
 				'conversationalSearch'        => $this->is_conversational_search_enabled()
 					? apply_filters( 'instantsearch_for_wp_conversational_search_agent_id', null )
@@ -243,8 +243,8 @@ class SiteSearch {
 
 	public function connect_css_selector_option_to_filter( $selectors ) {
 		$settings = Settings::get_settings();
-		if ( ! empty( $settings['sitesearch_settings']['css_selector_triggers'] ) ) {
-			$custom_selectors = array_map( 'trim', explode( ',', $settings['sitesearch_settings']['css_selector_triggers'] ) );
+		if ( ! empty( $settings['sitesearch_settings']['trigger_selectors'] ) ) {
+			$custom_selectors = array_map( 'trim', explode( ',', $settings['sitesearch_settings']['trigger_selectors'] ) );
 			$selectors        = array_merge( $selectors, $custom_selectors );
 		}
 		return $selectors;

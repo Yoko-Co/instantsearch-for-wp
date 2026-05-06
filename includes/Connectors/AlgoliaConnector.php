@@ -456,21 +456,7 @@ class AlgoliaConnector extends AbstractConnector {
 			// Set searchable attributes as highligthtedAttributes to ensure they are highlighted in results.
 			'attributesToHighlight'  => $searchable_attributes,
 			'attributesToSnippet'    => apply_filters( 'instantsearch_attributes_to_snippet', array( 'content', 'excerpt' ), $index['name'] ?? 'search' ),
-			'removeWordsIfNoResults' => apply_filters( 'instantsearch_remove_words_if_no_results', 'allOptional', $index['name'] ?? 'search' ),
-			'ranking'                => apply_filters(
-				'instantsearch_ranking',
-				array(
-					'typo',
-					'geo',
-					'words',
-					'filters',
-					'attribute',
-					'proximity',
-					'exact',
-					'desc(date_ts)'
-				),
-				$index['name'] ?? 'search'
-			),
+			'removeWordsIfNoResults' => apply_filters( 'instantsearch_remove_words_if_no_results', 'allOptional', $index['name'] ?? 'search' )
 		);
 
 		$index_settings = apply_filters( 'instantsearch_index_settings', $index_settings, $index['name'] ?? 'search' );
