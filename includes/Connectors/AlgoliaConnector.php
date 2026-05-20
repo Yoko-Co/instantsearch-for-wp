@@ -451,6 +451,10 @@ class AlgoliaConnector extends AbstractConnector {
 	 * @return void
 	 */
 	public function update_index_settings( $post_id, $index_post ) {
+		if ( empty( $this->client ) || ! method_exists( $this->client, 'setSettings' ) ) {
+			return;
+		}
+
 		$index      = json_decode( $index_post->post_content, true );
 		$index_name = $this->index_name( $index_post->post_name );
 
