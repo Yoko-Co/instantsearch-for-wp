@@ -43,10 +43,14 @@ class InstantSearchCommand {
 	 * [--batch_size=<size>]
 	 * : Number of posts to index per batch.
 	 *
+	 * [--post_type=<type>]
+	 * : Only index posts of this post type (e.g. "resource").
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp instantsearch index
 	 *     wp instantsearch index --index_id=123 --batch_size=50
+	 *     wp instantsearch index --post_type=resource
 	 *
 	 * @param array $args Positional arguments.
 	 * @param array $assoc_args Associative arguments.
@@ -58,9 +62,14 @@ class InstantSearchCommand {
 
 		$index_id   = isset( $assoc_args['index_id'] ) ? absint( $assoc_args['index_id'] ) : 0;
 		$batch_size = isset( $assoc_args['batch_size'] ) ? absint( $assoc_args['batch_size'] ) : 100;
+		$post_type  = isset( $assoc_args['post_type'] ) ? sanitize_key( $assoc_args['post_type'] ) : '';
 
 		if ( $batch_size < 1 ) {
 			\WP_CLI::error( 'Batch size must be greater than 0.' );
+		}
+
+		if ( isset( $assoc_args['post_type'] ) && empty( $post_type ) ) {
+			\WP_CLI::error( 'Post type must be a valid post type key.' );
 		}
 
 		$index = new Index( $index_id );
@@ -69,18 +78,53 @@ class InstantSearchCommand {
 			\WP_CLI::error( 'Invalid index ID or no index is configured.' );
 		}
 
+		if ( ! empty( $post_type ) ) {
+			$configured_post_types = $index->index_settings['post_types'] ?? array( 'post' );
+			$configured_post_types = is_array( $configured_post_types ) ? $configured_post_types : array( $configured_post_types );
+
+			if ( ! in_array( $post_type, $configured_post_types, true ) ) {
+				\WP_CLI::error(
+					sprintf(
+						'Post type "%s" is not configured for index "%s". Allowed post types: %s.',
+						$post_type,
+						$index->name,
+						implode( ', ', $configured_post_types )
+					)
+				);
+			}
+		}
+
 		$indexer = Indexer::get_instance();
 
 		if ( empty( $indexer->provider ) ) {
 			\WP_CLI::error( 'No InstantSearch provider is configured.' );
 		}
 
-		\WP_CLI::log( sprintf( 'Starting index "%s" with batch size %d.', $index->name, $batch_size ) );
+		if ( ! empty( $post_type ) ) {
+			\WP_CLI::log( sprintf( 'Starting index "%s" for post type "%s" with batch size %d.', $index->name, $post_type, $batch_size ) );
+		} else {
+			\WP_CLI::log( sprintf( 'Starting index "%s" with batch size %d.', $index->name, $batch_size ) );
+		}
 
-		try {
-			$indexer->provider->clear_index( $index->name );
-		} catch ( \Throwable $th ) {
-			\WP_CLI::error( sprintf( 'Failed to clear index: %s', $th->getMessage() ) );
+		if ( empty( $post_type ) ) {
+			try {
+				$indexer->provider->clear_index( $index->name );
+			} catch ( \Throwable $th ) {
+				\WP_CLI::error( sprintf( 'Failed to clear index: %s', $th->getMessage() ) );
+			}
+		} else {
+			\WP_CLI::log( 'Deleting existing records for the requested post type before reindexing that subset.' );
+
+			try {
+				$indexer->provider->delete_by_query(
+					array(
+						'post_type' => array( $post_type ),
+					),
+					$index
+				);
+			} catch ( \Throwable $th ) {
+				\WP_CLI::error( sprintf( 'Failed to delete existing records for post type "%s": %s', $post_type, $th->getMessage() ) );
+			}
 		}
 
 		$offset        = 0;
@@ -88,7 +132,7 @@ class InstantSearchCommand {
 		$indexed_posts = 0;
 
 		do {
-			$post_query = $index->get_posts_query( $batch_size, $offset );
+			$post_query = $index->get_posts_query( $batch_size, $offset, $post_type );
 			$post_ids   = $post_query->posts;
 
 			if ( null === $total_posts ) {

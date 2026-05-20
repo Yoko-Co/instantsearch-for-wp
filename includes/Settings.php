@@ -145,7 +145,7 @@ class Settings {
 		$public_post_types = apply_filters( 'instantsearch_for_wp_default_indexable_post_types', $public_post_types );
 
 		$default_settings = array(
-			'provider'            => '',
+			'provider'            => 'algolia',
 			'use_as_sitesearch'   => false,
 			'sitesearch_settings' => array(
 				'placeholder_text'      => __( 'Search...', 'instantsearch-for-wp' ),

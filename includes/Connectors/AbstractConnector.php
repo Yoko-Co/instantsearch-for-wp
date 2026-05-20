@@ -161,6 +161,15 @@ abstract class AbstractConnector {
 	abstract public function delete_posts( array $post_ids, $index = null );
 
 	/**
+	 * Delete records from the external service using WordPress-style query arguments.
+	 *
+	 * @param array $query_args WordPress-style query arguments used to target records.
+	 *
+	 * @return mixed Response from the deletion operation.
+	 */
+	abstract public function delete_by_query( array $query_args, $index = null );
+
+	/**
 	 * Search for posts in the external service.
 	 *
 	 * @param string $query The search query.

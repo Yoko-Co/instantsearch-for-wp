@@ -298,6 +298,8 @@ class AlgoliaConnector extends AbstractConnector {
 						$term_names[] = $term->name;
 					}
 					$record['taxonomy'][ $taxonomy ] = $term_names;
+				} else {
+					$record['taxonomy'][ $taxonomy ] = array();
 				}
 			}
 		}
@@ -363,6 +365,72 @@ class AlgoliaConnector extends AbstractConnector {
 		} catch ( \Throwable $th ) {
 			return;
 		}
+	}
+
+	/**
+	 * Delete Algolia records matching the provided WordPress-style query arguments.
+	 *
+	 * @param array $query_args WordPress-style query arguments used to target records.
+	 *
+	 * @return mixed Response from the deletion operation.
+	 */
+	public function delete_by_query( array $query_args, $index = null ) {
+		if ( empty( $index ) || empty( $index->name ) || empty( $query_args ) ) {
+			return null;
+		}
+
+		$delete_by_params = $this->translate_delete_by_query_args( $query_args );
+
+		if ( empty( $delete_by_params ) ) {
+			return null;
+		}
+
+		return $this->client->deleteBy( $index->name, $delete_by_params );
+	}
+
+	/**
+	 * Translate WordPress-style query arguments into Algolia deleteBy parameters.
+	 *
+	 * @param array $query_args WordPress-style query arguments.
+	 *
+	 * @return array
+	 */
+	private function translate_delete_by_query_args( array $query_args ) {
+		$delete_by_params = array();
+		$supported_keys   = array( 'post_type' );
+		$unsupported_keys = array_diff( array_keys( $query_args ), $supported_keys );
+
+		if ( ! empty( $unsupported_keys ) ) {
+			throw new \InvalidArgumentException(
+				sprintf(
+					'Unsupported delete_by_query arguments for Algolia: %s.',
+					implode( ', ', $unsupported_keys )
+				)
+			);
+		}
+
+		if ( isset( $query_args['post_type'] ) ) {
+			$post_types = is_array( $query_args['post_type'] ) ? $query_args['post_type'] : array( $query_args['post_type'] );
+			$post_types = array_values( array_filter( array_map( 'sanitize_key', $post_types ) ) );
+
+			if ( ! empty( $post_types ) ) {
+				$delete_by_params['filters'] = implode(
+					' OR ',
+					array_map(
+						function ( $post_type ) {
+							return 'post_type_slug:' . $post_type;
+						},
+						$post_types
+					)
+				);
+
+				if ( count( $post_types ) > 1 ) {
+					$delete_by_params['filters'] = '(' . $delete_by_params['filters'] . ')';
+				}
+			}
+		}
+
+		return $delete_by_params;
 	}
 
 	/**
