@@ -252,12 +252,12 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		$now = current_time( 'mysql' );
-		$post_content = wp_strip_all_tags( apply_filters( 'the_content', $post->post_content ) );
+		$post_content = wp_strip_all_tags( do_shortcode( $post->post_content ) );
 		$post_excerpt = wp_strip_all_tags( (string) $post->post_excerpt );
 
 		$record = array(
 			'postID'         => $post->ID,
-			'title'          => wp_strip_all_tags( apply_filters( 'the_title', $post->post_title ) ),
+			'title'          => wp_strip_all_tags( (string) $post->post_title ),
 			'content'        => $post_content,
 			'excerpt'        => $post_excerpt,
 			'date'           => $post->post_date,

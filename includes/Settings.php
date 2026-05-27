@@ -205,7 +205,11 @@ class Settings {
 						),
 						'trigger_selectors' => array(
 							'type'    => 'string',
-							'default' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
+							'default' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search, .wp-block-search__button',
+						),
+						'css_selector_triggers' => array(
+							'type'    => 'string',
+							'default' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search, .wp-block-search__button',
 						),
 						'debounce_delay' => array(
 							'type'    => 'integer',
