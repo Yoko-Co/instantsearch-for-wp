@@ -18,6 +18,13 @@ namespace InstantSearchForWP;
 class IndexingCriteria {
 
 	/**
+	 * Cached post types configured across all published Index CPT entries.
+	 *
+	 * @var array|null
+	 */
+	private $configured_index_post_types = null;
+
+	/**
 	 * Constructor to initialize the indexing criteria.
 	 *
 	 * @return void
@@ -49,27 +56,13 @@ class IndexingCriteria {
 			return $should_index;
 		}
 
-		$indexes = Settings::get_settings( 'indexes' );
-		if ( is_array( $indexes ) && ! empty( $indexes ) ) {
-			$settings_index = null;
-
-			if ( isset( $indexes['post_types'] ) ) {
-				$settings_index = $indexes;
-			} else {
-				$indexes_values = array_values( $indexes );
-				$first_index    = isset( $indexes_values[0] ) ? $indexes_values[0] : null;
-				if ( is_array( $first_index ) ) {
-					$settings_index = $first_index;
-				}
+		$configured_post_types = $this->get_configured_index_post_types();
+		if ( ! empty( $configured_post_types ) ) {
+			if ( in_array( $post->post_type, $configured_post_types, true ) ) {
+				return $should_index;
 			}
 
-			if ( is_array( $settings_index ) && isset( $settings_index['post_types'] ) && is_array( $settings_index['post_types'] ) ) {
-				if ( in_array( $post->post_type, $settings_index['post_types'], true ) ) {
-					return $should_index;
-				}
-
-				return false;
-			}
+			return false;
 		}
 
 		$public_post_types = get_post_types( array( 'public' => true ) );
@@ -100,11 +93,36 @@ class IndexingCriteria {
 			return $should_index;
 		}
 
-		if ( $this->is_selected_pdf_attachment( $post ) ) {
-			return $should_index;
-		}
-
 		$indexable_statuses = apply_filters( 'instantsearch_indexable_post_statuses', array( 'publish' ) );
+
+		if ( $this->is_selected_pdf_attachment( $post ) ) {
+			if ( 'inherit' !== $post->post_status ) {
+				return in_array( $post->post_status, $indexable_statuses, true ) ? $should_index : false;
+			}
+
+			// Unattached PDF attachments can be indexed via filter override.
+			if ( empty( $post->post_parent ) ) {
+				/**
+				 * Filters whether unattached media should be indexed.
+				 *
+				 * @since 1.0.0
+				 *
+				 * @param bool       $should_index_unattached_media Whether unattached media should be indexed. Default false.
+				 * @param \WP_Post   $post                          The attachment post object.
+				 * @param Index|null $index                         The index context when available, null for global context.
+				 */
+				$should_index_unattached_media = (bool) apply_filters( 'should_index_unattached_media', false, $post, $index );
+
+				return $should_index_unattached_media ? $should_index : false;
+			}
+
+			$parent_post = get_post( (int) $post->post_parent );
+			if ( ! $parent_post instanceof \WP_Post ) {
+				return false;
+			}
+
+			return in_array( $parent_post->post_status, $indexable_statuses, true ) ? $should_index : false;
+		}
 
 		if ( in_array( $post->post_status, $indexable_statuses, true ) ) {
 			// Not an indexable post status.
@@ -224,25 +242,48 @@ class IndexingCriteria {
 			return false;
 		}
 
-		$indexes = Settings::get_settings( 'indexes' );
-		if ( ! is_array( $indexes ) || empty( $indexes ) ) {
-			return false;
+		return in_array( 'attachment', $this->get_configured_index_post_types(), true );
+	}
+
+	/**
+	 * Retrieve post types configured across all published Index CPT entries.
+	 *
+	 * @return array
+	 */
+	private function get_configured_index_post_types() {
+		if ( null !== $this->configured_index_post_types ) {
+			return $this->configured_index_post_types;
 		}
 
-		$index = null;
-		if ( isset( $indexes['post_types'] ) ) {
-			$index = $indexes;
-		} else {
-			$indexes_values = array_values( $indexes );
-			$first_index    = isset( $indexes_values[0] ) ? $indexes_values[0] : null;
-			if ( is_array( $first_index ) ) {
-				$index = $first_index;
+		$index_ids = get_posts(
+			array(
+				'post_type'      => Index::$cpt_slug,
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+			)
+		);
+
+		if ( empty( $index_ids ) ) {
+			$this->configured_index_post_types = array();
+			return $this->configured_index_post_types;
+		}
+
+		$post_types = array();
+		foreach ( $index_ids as $index_id ) {
+			$index             = new Index( (int) $index_id );
+			$index_post_types  = $index->index_settings['post_types'] ?? array();
+			$index_post_types  = is_array( $index_post_types ) ? $index_post_types : array( $index_post_types );
+
+			foreach ( $index_post_types as $post_type ) {
+				if ( is_string( $post_type ) && '' !== $post_type ) {
+					$post_types[] = $post_type;
+				}
 			}
 		}
 
-		return is_array( $index )
-			&& isset( $index['post_types'] )
-			&& is_array( $index['post_types'] )
-			&& in_array( 'attachment', $index['post_types'], true );
+		$this->configured_index_post_types = array_values( array_unique( $post_types ) );
+
+		return $this->configured_index_post_types;
 	}
 }

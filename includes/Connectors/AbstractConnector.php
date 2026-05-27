@@ -57,12 +57,9 @@ abstract class AbstractConnector {
 	 * @return void
 	 */
 	public function plugin_options_changed( $old_value, $new_value ) {
-		// If the 'indexes' setting has changed, reindex all posts.
-		if ( isset( $old_value['indexes'] ) && isset( $new_value['indexes'] ) ) {
-			if ( $old_value['indexes'] !== $new_value['indexes'] ) {
-				do_action( 'instantsearch_for_wp_indexes_config_changed', $new_value['indexes'], $old_value['indexes'] );
-			}
-		}
+		// Index configuration now lives in Index CPT entries, not plugin options.
+		// Keep this callback for backward compatibility with existing hooks.
+		unset( $old_value, $new_value );
 	}
 
 	/**

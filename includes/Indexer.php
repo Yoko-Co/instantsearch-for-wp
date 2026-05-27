@@ -62,10 +62,52 @@ class Indexer {
 	 */
 	public function __construct() {
 		add_action( 'save_post', array( $this, 'index_post' ), 10, 3 );
+		add_action( 'add_attachment', array( $this, 'index_attachment_added' ) );
+		add_action( 'edit_attachment', array( $this, 'index_attachment_updated' ) );
 		add_action( 'delete_post', array( $this, 'delete_post' ) );
 		add_action( 'shutdown', array( $this, 'index_or_delete_posts' ) );
 
 		$this->provider = $this->get_provider();
+	}
+
+	/**
+	 * Queue a newly created attachment for indexing.
+	 *
+	 * Attachments can be created through media-specific flows where relying only
+	 * on the generic `save_post` hook may miss the event.
+	 *
+	 * @param int $post_id Attachment post ID.
+	 *
+	 * @return void
+	 */
+	public function index_attachment_added( $post_id ) {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || 'attachment' !== $post->post_type ) {
+			return;
+		}
+
+		$this->index_post( $post_id, $post, false );
+	}
+
+	/**
+	 * Queue an updated attachment for indexing.
+	 *
+	 * Attachments can be updated through media-specific flows where relying only
+	 * on the generic `save_post` hook may miss the event.
+	 *
+	 * @param int $post_id Attachment post ID.
+	 *
+	 * @return void
+	 */
+	public function index_attachment_updated( $post_id ) {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || 'attachment' !== $post->post_type ) {
+			return;
+		}
+
+		$this->index_post( $post_id, $post, true );
 	}
 
 
