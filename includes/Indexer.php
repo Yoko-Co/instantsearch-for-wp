@@ -64,6 +64,9 @@ class Indexer {
 		add_action( 'save_post', array( $this, 'index_post' ), 10, 3 );
 		add_action( 'add_attachment', array( $this, 'index_attachment_added' ) );
 		add_action( 'edit_attachment', array( $this, 'index_attachment_updated' ) );
+		add_action( 'added_post_meta', array( $this, 'index_post_on_meta_change' ), 10, 4 );
+		add_action( 'updated_post_meta', array( $this, 'index_post_on_meta_change' ), 10, 4 );
+		add_action( 'deleted_post_meta', array( $this, 'index_post_on_meta_change' ), 10, 4 );
 		add_action( 'delete_post', array( $this, 'delete_post' ) );
 		add_action( 'shutdown', array( $this, 'index_or_delete_posts' ) );
 
@@ -108,6 +111,30 @@ class Indexer {
 		}
 
 		$this->index_post( $post_id, $post, true );
+	}
+
+	/**
+	 * Queue a post for indexing when its post meta changes.
+	 *
+	 * This covers direct `add_post_meta()`, `update_post_meta()`, and
+	 * `delete_post_meta()` calls that do not always trigger post edit hooks.
+	 *
+	 * @param int    $meta_id    Meta row ID.
+	 * @param int    $post_id    Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 *
+	 * @return void
+	 */
+	public function index_post_on_meta_change( $meta_id, $post_id, $meta_key, $meta_value ) {
+		unset( $meta_id, $meta_key, $meta_value );
+
+		$post = get_post( (int) $post_id );
+		if ( ! $post instanceof \WP_Post ) {
+			return;
+		}
+
+		$this->index_post( (int) $post_id, $post, true );
 	}
 
 
