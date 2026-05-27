@@ -241,6 +241,15 @@
 	gap: 0.75rem;
 }
 
+.isfwp-site-search-summary__disclaimer {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	color: var( --isfwp-color-text-muted );
+	border-top: var( --isfwp-border-width ) solid color-mix( in srgb, var( --isfwp-color-text ) 10%, transparent );
+	padding-top: 0.5rem;
+}
+
 .isfwp-site-search-summary__toggle--muted {
 	color: var( --isfwp-color-text-muted );
 }
@@ -387,6 +396,10 @@
 
 input.ais-RefinementList-checkbox {
 	margin: 0;
+}
+
+.ais-InfiniteHits-loadPrevious, .ais-InfiniteHits-loadMore, .ais-HierarchicalMenu-showMore, .ais-Menu-showMore, .ais-RefinementList-showMore {
+	margin-top: calc( var(--isfwp-gap-spacing) / 4 );
 }
 
 .hit-heading a {

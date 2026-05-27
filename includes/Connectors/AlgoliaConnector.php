@@ -68,6 +68,8 @@ class AlgoliaConnector extends AbstractConnector {
 	 * @return array The modified default settings array.
 	 */
 	public function filter_default_settings( $default_settings ) {
+		$default_ai_disclaimer = __( 'AI-generated summaries can make mistakes. Please verify important details in the original content.', 'instantsearch-for-wp' );
+
 		$default_settings['algolia'] = array(
 			'app_id'              => '',
 			'search_only_api_key' => '',
@@ -75,6 +77,7 @@ class AlgoliaConnector extends AbstractConnector {
 			'hide_algolia_badge'  => false,
 			'ai_summaries_enabled' => false,
 			'ask_ai_agent_id'      => '',
+			'ai_disclaimer'        => $default_ai_disclaimer,
 		);
 		return $default_settings;
 	}
@@ -86,6 +89,7 @@ class AlgoliaConnector extends AbstractConnector {
 	 * @return array The modified settings schema array.
 	 */
 	public function filter_settings_schema( $schema ) {
+		$default_ai_disclaimer = __( 'AI-generated summaries can make mistakes. Please verify important details in the original content.', 'instantsearch-for-wp' );
 
 		if ( ! in_array( 'algolia', $schema['properties']['provider']['enum'], true ) ) {
 			$schema['properties']['provider']['enum'][] = 'algolia';
@@ -114,6 +118,10 @@ class AlgoliaConnector extends AbstractConnector {
 				'ask_ai_agent_id' => array(
 					'type'    => 'string',
 					'default' => '',
+				),
+				'ai_disclaimer' => array(
+					'type'    => 'string',
+					'default' => $default_ai_disclaimer,
 				),
 			),
 		);
@@ -252,12 +260,12 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		$now = current_time( 'mysql' );
-		$post_content = wp_strip_all_tags( do_shortcode( $post->post_content ) );
-		$post_excerpt = wp_strip_all_tags( (string) $post->post_excerpt );
+		$post_content = $this->normalize_record_text( wp_strip_all_tags( do_shortcode( $post->post_content ) ) );
+		$post_excerpt = $this->normalize_record_text( wp_strip_all_tags( (string) $post->post_excerpt ) );
 
 		$record = array(
 			'postID'         => $post->ID,
-			'title'          => wp_strip_all_tags( (string) $post->post_title ),
+			'title'          => $this->normalize_record_text( wp_strip_all_tags( (string) $post->post_title ) ),
 			'content'        => $post_content,
 			'excerpt'        => $post_excerpt,
 			'date'           => $post->post_date,
@@ -319,6 +327,24 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		return $record;
+	}
+
+	/**
+	 * Decode HTML entities in plain-text record fields.
+	 *
+	 * Non-breaking spaces are normalized to regular spaces so indexed text stays
+	 * searchable and visually consistent.
+	 *
+	 * @param string $text Plain-text field value.
+	 *
+	 * @return string
+	 */
+	private function normalize_record_text( string $text ) {
+		$charset      = get_bloginfo( 'charset' ) ?: 'UTF-8';
+		$decoded_text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, $charset );
+		$normalized   = preg_replace( '/\x{00A0}/u', ' ', $decoded_text );
+
+		return is_string( $normalized ) ? $normalized : $decoded_text;
 	}
 
 	/**

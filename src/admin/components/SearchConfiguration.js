@@ -55,6 +55,12 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 								value={algoliaConfig?.ask_ai_agent_id || ''}
 								onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ask_ai_agent_id: value })}
 							/>
+							<TextControl
+								label={__('AI Disclaimer', 'instantsearch-for-wp')}
+								help={__('Optional text shown below the AI summary, for example to remind readers that AI can make mistakes and results should be verified.', 'instantsearch-for-wp')}
+								value={algoliaConfig?.ai_disclaimer || ''}
+								onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ai_disclaimer: value })}
+							/>
 							<Button
 								variant="secondary"
 								href={`https://dashboard.algolia.com/apps/${settings?.algolia?.app_id}/ask-ai`}

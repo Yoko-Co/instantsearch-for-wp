@@ -256,6 +256,7 @@ class Settings {
 
 		$settings['algolia']['ai_summaries_enabled'] = ! empty( $settings['algolia']['ai_summaries_enabled'] );
 		$settings['algolia']['ask_ai_agent_id']      = sanitize_text_field( (string) $settings['algolia']['ask_ai_agent_id'] );
+		$settings['algolia']['ai_disclaimer']        = sanitize_text_field( (string) $settings['algolia']['ai_disclaimer'] );
 
 		if ( $settings['algolia']['ai_summaries_enabled'] && '' === $settings['algolia']['ask_ai_agent_id'] ) {
 			return new \WP_Error(

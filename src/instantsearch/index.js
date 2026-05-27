@@ -41,12 +41,22 @@ const search = instantsearch({
 let timerId;
 
 const searchHitsContainer = container?.querySelector('#isfwp-site-search-hits');
+const searchStatsContainer = container?.querySelector('#isfwp-site-search-stats');
 
-const toggleSearchHitsVisibility = () => {
+
+const toggleSearchHitsVisibility = (shouldShowHits) => {
 	if (searchHitsContainer) {
-		searchHitsContainer.hidden = !hasSubmittedSearch;
+		searchHitsContainer.hidden = !shouldShowHits;
+	}
+
+	if (searchStatsContainer) {
+		searchStatsContainer.hidden = !shouldShowHits;
 	}
 };
+
+const hasActiveSearchState = (searchState) => {
+	return Boolean(searchState?.query?.trim()) || hasActiveFacetFilters(searchState);
+	};
 
 const hasActiveFacetFilters = (searchState) => {
 	if (!searchState) {
@@ -82,7 +92,7 @@ const hasActiveFacetFilters = (searchState) => {
 	});
 };
 
-toggleSearchHitsVisibility();
+toggleSearchHitsVisibility(false);
 
 // Add widgets and start the search
 search.addWidgets([
@@ -139,7 +149,13 @@ search.addWidgets([
 				hidden(options) {
 					return options.items.length === 0;
 				},
-			})(refinementList)({ container, attribute }),
+			})(refinementList)({
+				attribute,
+				container,
+				showMore: true,
+				limit: 10,
+				showMoreLimit: 1000,
+			}),
 		// Widget overrides can be added here in the future.
 		widgets: [],
 	}),
@@ -180,17 +196,24 @@ search.on('render', () => {
 		searchInput.focus();
 	}
 
-	if (!hasSubmittedSearch && hasActiveFacetFilters(search?.helper?.state)) {
+	const hasActiveSearch = hasActiveSearchState(search?.helper?.state);
+
+	if (
+		!hasSubmittedSearch
+		&& hasActiveSearch
+	) {
 		hasSubmittedSearch = true;
 	}
 
-	toggleSearchHitsVisibility();
+	const shouldShowHits = hasSubmittedSearch && hasActiveSearch;
+
+	toggleSearchHitsVisibility(shouldShowHits);
 
 	if (summaryController.isEnabled && search?.helper?.state) {
 		const query = search.helper.state.query || '';
 		const hasHits = Number(search?.helper?.lastResults?.nbHits || 0) > 0;
 
-		if (hasSubmittedSearch && hasHits) {
+		if (shouldShowHits && hasHits) {
 			summaryController.handleQueryChange(query);
 		} else {
 			summaryController.reset();
@@ -222,7 +245,7 @@ dialog.on('show', async () => {
 dialog.on('hide', () => {
 	enableBodyScroll(container);
 	hasSubmittedSearch = false;
-	toggleSearchHitsVisibility();
+	toggleSearchHitsVisibility(false);
 	// Clear search state when dialog is closed
 	if (search?.helper) {
 		// Clear query + all facet/numeric/tag refinements + page back to 0
@@ -255,7 +278,7 @@ container?.addEventListener('submit', (event) => {
 	}
 
 	hasSubmittedSearch = true;
-	toggleSearchHitsVisibility();
+	toggleSearchHitsVisibility(true);
 });
 
 // Bind search trigger elements on click or focus

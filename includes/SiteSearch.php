@@ -55,6 +55,18 @@ class SiteSearch {
 	}
 
 	/**
+	 * Check whether the Powered by Algolia badge should be rendered.
+	 *
+	 * @return bool
+	 */
+	public function should_render_powered_by_algolia() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+
+		return empty( $algolia['hide_algolia_badge'] );
+	}
+
+	/**
 	 * Add the root DOM <div> for InstantSearch.js
 	 *
 	 * @return void
@@ -83,6 +95,7 @@ class SiteSearch {
 
 		$is_conversational_search = $this->is_conversational_search_enabled();
 		$is_ai_summaries_enabled  = $this->is_ai_summaries_enabled();
+		$show_powered_by_algolia  = $this->should_render_powered_by_algolia();
 		?>
 		<div id="isfwp-site-search" class="<?php echo esc_attr( implode( ' ', $search_classes ) ); ?>">
 			<div class="isfwp-site-search-topbar">
@@ -98,7 +111,9 @@ class SiteSearch {
 			<div class="isfwp-site-search-header">
 				<div class="isfwp-site-search-container">
 					<div id="isfwp-site-search-input"></div>
-					<div id="isfwp-powered-by-algolia"></div>
+					<?php if ( $show_powered_by_algolia ) : ?>
+						<div id="isfwp-powered-by-algolia"></div>
+					<?php endif; ?>
 				</div>
 			</div>
 			<div class="isfwp-site-search-main">
@@ -179,6 +194,7 @@ class SiteSearch {
 				'aiSummaries'                 => array(
 					'enabled'  => $this->is_ai_summaries_enabled(),
 					'agentId'  => $settings['algolia']['ask_ai_agent_id'] ?? '',
+					'disclaimer' => $settings['algolia']['ai_disclaimer'] ?? '',
 				),
 			)
 		);
