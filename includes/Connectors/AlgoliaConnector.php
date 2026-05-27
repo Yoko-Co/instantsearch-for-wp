@@ -128,7 +128,7 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		if ( isset( $settings['algolia']['search_only_api_key'] ) && $settings['algolia']['search_only_api_key'] ) {
-			$config['apiKey'] = $settings['algolia']['search_only_api_key'];
+			$config['apiKey'] = apply_filters( 'instantsearch_for_wp_algolia_search_only_api_key', $settings['algolia']['search_only_api_key'] );
 		}
 
 		if ( isset( $settings['algolia']['hide_algolia_badge'] ) && $settings['algolia']['hide_algolia_badge'] ) {
