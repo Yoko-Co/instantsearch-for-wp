@@ -21,6 +21,7 @@ import { disableBodyScroll, enableBodyScroll } from 'body-scroll-lock'
 const container = document.getElementById('isfwp-site-search');
 const dialog = new A11yDialog(container);
 let isInitialized = false;
+let hasSubmittedSearch = false;
 
 const summaryController = createAiSummaryController({
 	container: document.getElementById('isfwp-site-search-summary'),
@@ -38,6 +39,60 @@ const search = instantsearch({
 });
 
 let timerId;
+
+const searchHitsContainer = container?.querySelector('#isfwp-site-search-hits');
+const searchStatsContainer = container?.querySelector('#isfwp-site-search-stats');
+
+
+const toggleSearchHitsVisibility = (shouldShowHits) => {
+	if (searchHitsContainer) {
+		searchHitsContainer.hidden = !shouldShowHits;
+	}
+
+	if (searchStatsContainer) {
+		searchStatsContainer.hidden = !shouldShowHits;
+	}
+};
+
+const hasActiveSearchState = (searchState) => {
+	return Boolean(searchState?.query?.trim()) || hasActiveFacetFilters(searchState);
+	};
+
+const hasActiveFacetFilters = (searchState) => {
+	if (!searchState) {
+		return false;
+	}
+
+	return [
+		searchState.facetsRefinements,
+		searchState.disjunctiveFacetsRefinements,
+		searchState.hierarchicalFacetsRefinements,
+		searchState.numericRefinements,
+		searchState.tagRefinements,
+	].some((refinementGroup) => {
+		if (Array.isArray(refinementGroup)) {
+			return refinementGroup.length > 0;
+		}
+
+		if (!refinementGroup || 'object' !== typeof refinementGroup) {
+			return false;
+		}
+
+		return Object.values(refinementGroup).some((value) => {
+			if (Array.isArray(value)) {
+				return value.length > 0;
+			}
+
+			if (value && 'object' === typeof value) {
+				return Object.keys(value).length > 0;
+			}
+
+			return Boolean(value);
+		});
+	});
+};
+
+toggleSearchHitsVisibility(false);
 
 // Add widgets and start the search
 search.addWidgets([
@@ -94,7 +149,13 @@ search.addWidgets([
 				hidden(options) {
 					return options.items.length === 0;
 				},
-			})(refinementList)({ container, attribute }),
+			})(refinementList)({
+				attribute,
+				container,
+				showMore: true,
+				limit: 10,
+				showMoreLimit: 1000,
+			}),
 		// Widget overrides can be added here in the future.
 		widgets: [],
 	}),
@@ -135,11 +196,24 @@ search.on('render', () => {
 		searchInput.focus();
 	}
 
+	const hasActiveSearch = hasActiveSearchState(search?.helper?.state);
+
+	if (
+		!hasSubmittedSearch
+		&& hasActiveSearch
+	) {
+		hasSubmittedSearch = true;
+	}
+
+	const shouldShowHits = hasSubmittedSearch && hasActiveSearch;
+
+	toggleSearchHitsVisibility(shouldShowHits);
+
 	if (summaryController.isEnabled && search?.helper?.state) {
 		const query = search.helper.state.query || '';
 		const hasHits = Number(search?.helper?.lastResults?.nbHits || 0) > 0;
 
-		if (hasHits) {
+		if (shouldShowHits && hasHits) {
 			summaryController.handleQueryChange(query);
 		} else {
 			summaryController.reset();
@@ -170,6 +244,8 @@ dialog.on('show', async () => {
 // Enable body scroll on dialog hide
 dialog.on('hide', () => {
 	enableBodyScroll(container);
+	hasSubmittedSearch = false;
+	toggleSearchHitsVisibility(false);
 	// Clear search state when dialog is closed
 	if (search?.helper) {
 		// Clear query + all facet/numeric/tag refinements + page back to 0
@@ -186,6 +262,24 @@ if (closeButton) {
 		dialog.hide();
 	});
 }
+
+container?.addEventListener('submit', (event) => {
+	const searchForm = event.target;
+
+	if (!(searchForm instanceof HTMLFormElement) || !searchForm.closest('#isfwp-site-search-input')) {
+		return;
+	}
+
+	const formData = new FormData(searchForm);
+	const query = String(formData.get('query') || '').trim();
+
+	if ('' === query) {
+		return;
+	}
+
+	hasSubmittedSearch = true;
+	toggleSearchHitsVisibility(true);
+});
 
 // Bind search trigger elements on click or focus
 document.querySelectorAll(instantSearchForWPFrontend.searchTriggerQuerySelectors).forEach((el) => {

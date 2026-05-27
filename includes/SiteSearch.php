@@ -55,6 +55,18 @@ class SiteSearch {
 	}
 
 	/**
+	 * Check whether the Powered by Algolia badge should be rendered.
+	 *
+	 * @return bool
+	 */
+	public function should_render_powered_by_algolia() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+
+		return empty( $algolia['hide_algolia_badge'] );
+	}
+
+	/**
 	 * Add the root DOM <div> for InstantSearch.js
 	 *
 	 * @return void
@@ -83,6 +95,7 @@ class SiteSearch {
 
 		$is_conversational_search = $this->is_conversational_search_enabled();
 		$is_ai_summaries_enabled  = $this->is_ai_summaries_enabled();
+		$show_powered_by_algolia  = $this->should_render_powered_by_algolia();
 		?>
 		<div id="isfwp-site-search" class="<?php echo esc_attr( implode( ' ', $search_classes ) ); ?>">
 			<div class="isfwp-site-search-topbar">
@@ -98,7 +111,9 @@ class SiteSearch {
 			<div class="isfwp-site-search-header">
 				<div class="isfwp-site-search-container">
 					<div id="isfwp-site-search-input"></div>
-					<div id="isfwp-powered-by-algolia"></div>
+					<?php if ( $show_powered_by_algolia ) : ?>
+						<div id="isfwp-powered-by-algolia"></div>
+					<?php endif; ?>
 				</div>
 			</div>
 			<div class="isfwp-site-search-main">
@@ -129,6 +144,12 @@ class SiteSearch {
 	 * @return void
 	 */
 	public function add_search_trigger_button() {
+
+		$is_conversational_search = $this->is_conversational_search_enabled();
+		// Only show the search trigger if conversational search is disabled, or if it's enabled but the user hasn't opted to hide the trigger.
+		if ( $is_conversational_search && apply_filters( 'instantsearch_for_wp_hide_search_trigger_with_conversational_search', true ) ) {
+			return;
+		}
 		?>
 		<button class="isfwp-search-trigger isfwp-floating-trigger" aria-label="<?php esc_attr_e( 'Open search', 'instantsearch-for-wp' ); ?>">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -173,6 +194,7 @@ class SiteSearch {
 				'aiSummaries'                 => array(
 					'enabled'  => $this->is_ai_summaries_enabled(),
 					'agentId'  => $settings['algolia']['ask_ai_agent_id'] ?? '',
+					'disclaimer' => $settings['algolia']['ai_disclaimer'] ?? '',
 				),
 			)
 		);

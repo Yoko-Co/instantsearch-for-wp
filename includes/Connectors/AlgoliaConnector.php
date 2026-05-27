@@ -68,6 +68,8 @@ class AlgoliaConnector extends AbstractConnector {
 	 * @return array The modified default settings array.
 	 */
 	public function filter_default_settings( $default_settings ) {
+		$default_ai_disclaimer = __( 'AI-generated summaries can make mistakes. Please verify important details in the original content.', 'instantsearch-for-wp' );
+
 		$default_settings['algolia'] = array(
 			'app_id'              => '',
 			'search_only_api_key' => '',
@@ -75,6 +77,7 @@ class AlgoliaConnector extends AbstractConnector {
 			'hide_algolia_badge'  => false,
 			'ai_summaries_enabled' => false,
 			'ask_ai_agent_id'      => '',
+			'ai_disclaimer'        => $default_ai_disclaimer,
 		);
 		return $default_settings;
 	}
@@ -86,6 +89,7 @@ class AlgoliaConnector extends AbstractConnector {
 	 * @return array The modified settings schema array.
 	 */
 	public function filter_settings_schema( $schema ) {
+		$default_ai_disclaimer = __( 'AI-generated summaries can make mistakes. Please verify important details in the original content.', 'instantsearch-for-wp' );
 
 		if ( ! in_array( 'algolia', $schema['properties']['provider']['enum'], true ) ) {
 			$schema['properties']['provider']['enum'][] = 'algolia';
@@ -115,6 +119,10 @@ class AlgoliaConnector extends AbstractConnector {
 					'type'    => 'string',
 					'default' => '',
 				),
+				'ai_disclaimer' => array(
+					'type'    => 'string',
+					'default' => $default_ai_disclaimer,
+				),
 			),
 		);
 		return $schema;
@@ -128,7 +136,7 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		if ( isset( $settings['algolia']['search_only_api_key'] ) && $settings['algolia']['search_only_api_key'] ) {
-			$config['apiKey'] = $settings['algolia']['search_only_api_key'];
+			$config['apiKey'] = apply_filters( 'instantsearch_for_wp_algolia_search_only_api_key', $settings['algolia']['search_only_api_key'] );
 		}
 
 		if ( isset( $settings['algolia']['hide_algolia_badge'] ) && $settings['algolia']['hide_algolia_badge'] ) {
@@ -252,12 +260,12 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		$now = current_time( 'mysql' );
-		$post_content = wp_strip_all_tags( apply_filters( 'the_content', $post->post_content ) );
-		$post_excerpt = wp_strip_all_tags( (string) $post->post_excerpt );
+		$post_content = $this->normalize_record_text( wp_strip_all_tags( do_shortcode( $post->post_content ) ) );
+		$post_excerpt = $this->normalize_record_text( wp_strip_all_tags( (string) $post->post_excerpt ) );
 
 		$record = array(
 			'postID'         => $post->ID,
-			'title'          => wp_strip_all_tags( apply_filters( 'the_title', $post->post_title ) ),
+			'title'          => $this->normalize_record_text( wp_strip_all_tags( (string) $post->post_title ) ),
 			'content'        => $post_content,
 			'excerpt'        => $post_excerpt,
 			'date'           => $post->post_date,
@@ -298,6 +306,8 @@ class AlgoliaConnector extends AbstractConnector {
 						$term_names[] = $term->name;
 					}
 					$record['taxonomy'][ $taxonomy ] = $term_names;
+				} else {
+					$record['taxonomy'][ $taxonomy ] = array();
 				}
 			}
 		}
@@ -317,6 +327,24 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		return $record;
+	}
+
+	/**
+	 * Decode HTML entities in plain-text record fields.
+	 *
+	 * Non-breaking spaces are normalized to regular spaces so indexed text stays
+	 * searchable and visually consistent.
+	 *
+	 * @param string $text Plain-text field value.
+	 *
+	 * @return string
+	 */
+	private function normalize_record_text( string $text ) {
+		$charset      = get_bloginfo( 'charset' ) ?: 'UTF-8';
+		$decoded_text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, $charset );
+		$normalized   = preg_replace( '/\x{00A0}/u', ' ', $decoded_text );
+
+		return is_string( $normalized ) ? $normalized : $decoded_text;
 	}
 
 	/**
@@ -366,6 +394,72 @@ class AlgoliaConnector extends AbstractConnector {
 	}
 
 	/**
+	 * Delete Algolia records matching the provided WordPress-style query arguments.
+	 *
+	 * @param array $query_args WordPress-style query arguments used to target records.
+	 *
+	 * @return mixed Response from the deletion operation.
+	 */
+	public function delete_by_query( array $query_args, $index = null ) {
+		if ( empty( $index ) || empty( $index->name ) || empty( $query_args ) ) {
+			return null;
+		}
+
+		$delete_by_params = $this->translate_delete_by_query_args( $query_args );
+
+		if ( empty( $delete_by_params ) ) {
+			return null;
+		}
+
+		return $this->client->deleteBy( $index->name, $delete_by_params );
+	}
+
+	/**
+	 * Translate WordPress-style query arguments into Algolia deleteBy parameters.
+	 *
+	 * @param array $query_args WordPress-style query arguments.
+	 *
+	 * @return array
+	 */
+	private function translate_delete_by_query_args( array $query_args ) {
+		$delete_by_params = array();
+		$supported_keys   = array( 'post_type' );
+		$unsupported_keys = array_diff( array_keys( $query_args ), $supported_keys );
+
+		if ( ! empty( $unsupported_keys ) ) {
+			throw new \InvalidArgumentException(
+				sprintf(
+					'Unsupported delete_by_query arguments for Algolia: %s.',
+					implode( ', ', $unsupported_keys )
+				)
+			);
+		}
+
+		if ( isset( $query_args['post_type'] ) ) {
+			$post_types = is_array( $query_args['post_type'] ) ? $query_args['post_type'] : array( $query_args['post_type'] );
+			$post_types = array_values( array_filter( array_map( 'sanitize_key', $post_types ) ) );
+
+			if ( ! empty( $post_types ) ) {
+				$delete_by_params['filters'] = implode(
+					' OR ',
+					array_map(
+						function ( $post_type ) {
+							return 'post_type_slug:' . $post_type;
+						},
+						$post_types
+					)
+				);
+
+				if ( count( $post_types ) > 1 ) {
+					$delete_by_params['filters'] = '(' . $delete_by_params['filters'] . ')';
+				}
+			}
+		}
+
+		return $delete_by_params;
+	}
+
+	/**
 	 * Search for posts in the Algolia service.
 	 *
 	 * @param string $query The search query.
@@ -383,6 +477,10 @@ class AlgoliaConnector extends AbstractConnector {
 	 * @return void
 	 */
 	public function update_index_settings( $post_id, $index_post ) {
+		if ( empty( $this->client ) || ! method_exists( $this->client, 'setSettings' ) ) {
+			return;
+		}
+
 		$index      = json_decode( $index_post->post_content, true );
 		$index_name = $this->index_name( $index_post->post_name );
 

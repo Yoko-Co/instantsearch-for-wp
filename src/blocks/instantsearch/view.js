@@ -27,6 +27,7 @@ import {
 } from 'instantsearch.js/es/widgets';
 
 const BLOCK_VISIBILITY_HIDE_CLASS_PREFIX = 'block-visibility-hide-';
+const FACET_CLASS_PREFIX = 'facet-';
 
 function parseRouteParamValue( value ) {
 	if ( ! value ) {
@@ -162,6 +163,164 @@ function withFacetPanel( widgetFactory, container, config, widgetOptions ) {
 		container,
 		...widgetOptions,
 	} );
+}
+
+function hasFacetRefinements( refinements ) {
+	if ( ! refinements || typeof refinements !== 'object' ) {
+		return false;
+	}
+
+	return Object.values( refinements ).some( ( value ) => {
+		if ( Array.isArray( value ) ) {
+			return value.length > 0;
+		}
+
+		if ( value && typeof value === 'object' ) {
+			return Object.keys( value ).length > 0;
+		}
+
+		return value !== undefined && value !== null && value !== '';
+	} );
+}
+
+function hasNumericRefinements( refinements ) {
+	if ( ! refinements || typeof refinements !== 'object' ) {
+		return false;
+	}
+
+	return Object.values( refinements ).some( ( operators ) =>
+		operators && typeof operators === 'object' && Object.values( operators ).some( ( values ) =>
+			Array.isArray( values ) ? values.length > 0 : Boolean( values )
+		)
+	);
+}
+
+function hasActiveRefinements( state ) {
+	if ( ! state || typeof state !== 'object' ) {
+		return false;
+	}
+
+	if ( Array.isArray( state.tagRefinements ) && state.tagRefinements.length > 0 ) {
+		return true;
+	}
+
+	if ( hasFacetRefinements( state.facetsRefinements ) ) {
+		return true;
+	}
+
+	if ( hasFacetRefinements( state.disjunctiveFacetsRefinements ) ) {
+		return true;
+	}
+
+	if ( hasFacetRefinements( state.hierarchicalFacetsRefinements ) ) {
+		return true;
+	}
+
+	return hasNumericRefinements( state.numericRefinements );
+}
+
+function shouldRunSearch( state ) {
+	const hasQuery = typeof state?.query === 'string' && state.query.trim().length > 0;
+
+	return hasQuery || hasActiveRefinements( state );
+}
+
+function slugifyFacetClassPart( value ) {
+	return String( value ?? '' )
+		.toLowerCase()
+		.trim()
+		.replace( /[_\s]+/g, '-' )
+		.replace( /[^a-z0-9-]+/g, '-' )
+		.replace( /-+/g, '-' )
+		.replace( /^-|-$/g, '' );
+}
+
+function addFacetClassesFromMap( classes, refinementsMap ) {
+	if ( ! refinementsMap || typeof refinementsMap !== 'object' ) {
+		return;
+	}
+
+	Object.entries( refinementsMap ).forEach( ( [ rawAttribute, rawValues ] ) => {
+		const attributeSlug = slugifyFacetClassPart( rawAttribute );
+		if ( ! attributeSlug ) {
+			return;
+		}
+
+		const values = Array.isArray( rawValues ) ? rawValues : [ rawValues ];
+
+		values.forEach( ( rawValue ) => {
+			const valueSlug = slugifyFacetClassPart( rawValue );
+			if ( valueSlug ) {
+				classes.add( `${ FACET_CLASS_PREFIX }${ attributeSlug }-${ valueSlug }` );
+			}
+		} );
+	} );
+}
+
+function getFacetRefinementClasses( state ) {
+	const classes = new Set();
+
+	addFacetClassesFromMap( classes, state?.facetsRefinements );
+	addFacetClassesFromMap( classes, state?.disjunctiveFacetsRefinements );
+	addFacetClassesFromMap( classes, state?.hierarchicalFacetsRefinements );
+
+	if ( Array.isArray( state?.tagRefinements ) ) {
+		state.tagRefinements.forEach( ( value ) => {
+			const valueSlug = slugifyFacetClassPart( value );
+			if ( valueSlug ) {
+				classes.add( `${ FACET_CLASS_PREFIX }tag-${ valueSlug }` );
+			}
+		} );
+	}
+
+	return classes;
+}
+
+function updateFacetClassesOnContainer( container, state ) {
+	const previousClasses = container._isfwpFacetClasses instanceof Set
+		? container._isfwpFacetClasses
+		: new Set();
+
+	previousClasses.forEach( ( className ) => {
+		container.classList.remove( className );
+	} );
+
+	const nextClasses = getFacetRefinementClasses( state );
+	nextClasses.forEach( ( className ) => {
+		container.classList.add( className );
+	} );
+
+	container._isfwpFacetClasses = nextClasses;
+}
+
+function ensureEmptySearchMessageElement( container, message, anchorElement ) {
+	let messageEl = container.querySelector( '.isfwp-empty-search-message' );
+
+	if ( ! messageEl ) {
+		messageEl = document.createElement( 'div' );
+		messageEl.className = 'isfwp-empty-search-message';
+		messageEl.hidden = true;
+		if ( anchorElement?.parentNode ) {
+			anchorElement.parentNode.insertBefore( messageEl, anchorElement );
+		} else {
+			container.insertBefore( messageEl, container.firstChild );
+		}
+	}
+
+	messageEl.textContent = message || 'Enter a search or add a filter to see results.';
+
+	return messageEl;
+}
+
+function setEmptySearchMessageVisibility( container, isVisible, message, anchorElement ) {
+	const messageEl = ensureEmptySearchMessageElement( container, message, anchorElement );
+
+	if ( ! messageEl ) {
+		return;
+	}
+
+	messageEl.hidden = ! isVisible;
+	container.classList.toggle( 'isfwp-empty-search-active', isVisible );
 }
 
 /**
@@ -414,6 +573,25 @@ function initInstance( container ) {
 	}
 
 	const searchClient = algoliasearch( config.appId, config.apiKey );
+	let hideResultsOnEmptySearch = false;
+	let emptySearchMessage = 'Enter a search or add a filter to see results.';
+
+	const hitsElements = Array.from( container.querySelectorAll( '[data-isfwp-widget="hits"]' ) );
+	hitsElements.forEach( ( el ) => {
+		if ( isHiddenByBlockVisibility( el ) || ! el.dataset.isfwpConfig ) {
+			return;
+		}
+
+		try {
+			const hitsConfig = JSON.parse( el.dataset.isfwpConfig );
+			if ( hitsConfig.hideResultsOnEmptySearch ) {
+				hideResultsOnEmptySearch = true;
+				emptySearchMessage = hitsConfig.emptySearchMessage || emptySearchMessage;
+			}
+		} catch ( e ) {
+			// ignore
+		}
+	} );
 
 	const searchOptions = {
 		indexName: config.indexName,
@@ -428,11 +606,20 @@ function initInstance( container ) {
 		};
 	}
 
+	if ( ! hideResultsOnEmptySearch ) {
+		const messageEl = container.querySelector( '.isfwp-empty-search-message' );
+		if ( messageEl ) {
+			messageEl.hidden = true;
+		}
+		container.classList.remove( 'isfwp-empty-search-active' );
+		container.classList.remove( 'isfwp-hits-pending' );
+	}
+
 	const search = instantsearch( searchOptions );
 
 	// Allow a child hits widget to override hitsPerPage at the widget level.
 	let hitsPerPage = config.hitsPerPage || 20;
-	container.querySelectorAll( '[data-isfwp-widget="hits"]' ).forEach( ( el ) => {
+	hitsElements.forEach( ( el ) => {
 		if ( isHiddenByBlockVisibility( el ) ) {
 			return;
 		}
@@ -505,6 +692,22 @@ function initInstance( container ) {
 	} );
 
 	search.addWidgets( widgets );
+
+	search.on( 'render', () => {
+		const state = search.helper?.state;
+		const shouldHideEmptyState = hideResultsOnEmptySearch && ! shouldRunSearch( state );
+		const isPendingRequest = hideResultsOnEmptySearch
+			&& ! shouldHideEmptyState
+			&& search.helper
+			&& typeof search.helper.hasPendingRequests === 'function'
+			&& search.helper.hasPendingRequests();
+		const hitsAnchor = hitsElements[ 0 ] || null;
+
+		setEmptySearchMessageVisibility( container, shouldHideEmptyState, emptySearchMessage, hitsAnchor );
+		container.classList.toggle( 'isfwp-hits-pending', Boolean( isPendingRequest ) );
+		updateFacetClassesOnContainer( container, state );
+	} );
+
 	search.start();
 
 	// Expose on the element for external access.

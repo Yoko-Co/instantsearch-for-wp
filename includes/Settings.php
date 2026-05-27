@@ -145,7 +145,7 @@ class Settings {
 		$public_post_types = apply_filters( 'instantsearch_for_wp_default_indexable_post_types', $public_post_types );
 
 		$default_settings = array(
-			'provider'            => '',
+			'provider'            => 'algolia',
 			'use_as_sitesearch'   => false,
 			'sitesearch_settings' => array(
 				'placeholder_text'      => __( 'Search...', 'instantsearch-for-wp' ),
@@ -205,7 +205,11 @@ class Settings {
 						),
 						'trigger_selectors' => array(
 							'type'    => 'string',
-							'default' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
+							'default' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search, .wp-block-search__button',
+						),
+						'css_selector_triggers' => array(
+							'type'    => 'string',
+							'default' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search, .wp-block-search__button',
 						),
 						'debounce_delay' => array(
 							'type'    => 'integer',
@@ -252,6 +256,7 @@ class Settings {
 
 		$settings['algolia']['ai_summaries_enabled'] = ! empty( $settings['algolia']['ai_summaries_enabled'] );
 		$settings['algolia']['ask_ai_agent_id']      = sanitize_text_field( (string) $settings['algolia']['ask_ai_agent_id'] );
+		$settings['algolia']['ai_disclaimer']        = sanitize_text_field( (string) $settings['algolia']['ai_disclaimer'] );
 
 		if ( $settings['algolia']['ai_summaries_enabled'] && '' === $settings['algolia']['ask_ai_agent_id'] ) {
 			return new \WP_Error(

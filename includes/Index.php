@@ -120,14 +120,20 @@ class Index {
 	 * (containing this index's slug or the `__all__` sentinel) are automatically
 	 * omitted from the query results.
 	 *
-	 * @param int $number Number of posts to retrieve.
-	 * @param int $offset Offset for pagination.
-	 * 
+	 * @param int         $number    Number of posts to retrieve.
+	 * @param int         $offset    Offset for pagination.
+	 * @param string|null $post_type Optional post type to restrict the query to.
+	 *
 	 * @return WP_Query The WP_Query object containing the posts.
 	 */
-	public function get_posts_query( $number = 100, $offset = 0 ) {
+	public function get_posts_query( $number = 100, $offset = 0, $post_type = null ) {
 		$post_types  = $this->index_settings['post_types'] ?? array( 'post' );
 		$post_types  = is_array( $post_types ) ? $post_types : array( $post_types );
+
+		if ( ! empty( $post_type ) && in_array( $post_type, $post_types, true ) ) {
+			$post_types = array( $post_type );
+		}
+
 		$post_status = array( 'publish' );
 
 		if ( in_array( 'attachment', $post_types, true ) ) {

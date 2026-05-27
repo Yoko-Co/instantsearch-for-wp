@@ -260,6 +260,9 @@ const appendSummaryFromBuffer = (buffer, currentText, flush = false) => {
 
 export const createAiSummaryController = ({ container, frontendConfig }) => {
 	const aiSummariesConfig = frontendConfig?.aiSummaries || {};
+	const summaryDisclaimer = typeof aiSummariesConfig?.disclaimer === 'string'
+		? aiSummariesConfig.disclaimer.trim()
+		: '';
 	const isEnabled =
 		frontendConfig?.provider === 'algolia'
 		&& !!aiSummariesConfig?.enabled
@@ -395,6 +398,9 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 			? __('Collapse summary', 'instantsearch-for-wp')
 			: __('Read full summary', 'instantsearch-for-wp');
 		const disableLabel = __('Turn summaries off', 'instantsearch-for-wp');
+		const disclaimerMarkup = summaryDisclaimer
+			? `<p class="isfwp-site-search-summary__disclaimer">${escapeHtml(summaryDisclaimer)}</p>`
+			: '';
 
 		container.innerHTML = `
 			<div class="isfwp-site-search-summary__header">
@@ -409,6 +415,7 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 			</div>
 			<div class="isfwp-site-search-summary__body">
 				<div class="isfwp-site-search-summary__content ${contentStateClass}">${renderedText}</div>
+				${disclaimerMarkup}
 				<div class="isfwp-site-search-summary__actions">
 					<button
 						type="button"
