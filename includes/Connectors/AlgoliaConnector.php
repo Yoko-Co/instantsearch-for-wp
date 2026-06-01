@@ -275,6 +275,7 @@ class AlgoliaConnector extends AbstractConnector {
 			'indexed_at'     => $now,
 			'indexed_at_ts'  => strtotime( $now ),
 			'url'            => get_permalink( $post->ID ),
+			'weight'         => intval( apply_filters( 'instantsearch_record_weight', 0, $post, $index ) ),
 		);
 
 		if ( 'attachment' === $post->post_type && 'application/pdf' === get_post_mime_type( $post->ID ) ) {
