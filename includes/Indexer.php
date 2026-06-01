@@ -67,7 +67,11 @@ class Indexer {
 		add_action( 'added_post_meta', array( $this, 'index_post_on_meta_change' ), 10, 4 );
 		add_action( 'updated_post_meta', array( $this, 'index_post_on_meta_change' ), 10, 4 );
 		add_action( 'deleted_post_meta', array( $this, 'index_post_on_meta_change' ), 10, 4 );
+		
+		add_action( 'delete_attachment', array( $this, 'delete_post' ) );
+		add_action( 'trashed_post', array( $this, 'delete_post' ) );
 		add_action( 'delete_post', array( $this, 'delete_post' ) );
+
 		add_action( 'shutdown', array( $this, 'index_or_delete_posts' ) );
 
 		$this->provider = $this->get_provider();
@@ -368,6 +372,15 @@ class Indexer {
 	 * @param int $post_id Post ID.
 	 */
 	public function delete_post( $post_id ) {
-		do_action( 'instantsearch_delete_posts', array( $post_id ) );
+		add_filter(
+			self::$delete_post_ids_hook,
+			function ( $post_ids ) use ( $post_id ) {
+				if ( ! is_array( $post_ids ) ) {
+					$post_ids = empty( $post_ids ) ? array() : (array) $post_ids;
+				}
+				$post_ids[] = $post_id;
+				return array_values( array_unique( $post_ids ) );
+			}
+		);
 	}
 }
