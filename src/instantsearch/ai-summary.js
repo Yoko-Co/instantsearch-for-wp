@@ -258,11 +258,41 @@ const appendSummaryFromBuffer = (buffer, currentText, flush = false) => {
 	return { nextText, remainder };
 };
 
+const normalizeSearchParameters = (searchParameters) => {
+	if (!searchParameters || typeof searchParameters !== 'object') {
+		return {
+			distinct: true,
+		};
+	}
+
+	return {
+		...searchParameters,
+	};
+};
+
+const stableStringify = (value) => {
+	if (Array.isArray(value)) {
+		return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+	}
+
+	if (value && typeof value === 'object') {
+		const keys = Object.keys(value).sort();
+		return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+	}
+
+	return JSON.stringify(value);
+};
+
+const createSummaryRequestKey = (query, searchParameters) => `${query}::${stableStringify(searchParameters)}`;
+
 export const createAiSummaryController = ({ container, frontendConfig }) => {
 	const aiSummariesConfig = frontendConfig?.aiSummaries || {};
 	const summaryDisclaimer = typeof aiSummariesConfig?.disclaimer === 'string'
 		? aiSummariesConfig.disclaimer.trim()
 		: '';
+	const isDebugSearchParametersEnabled =
+		aiSummariesConfig?.debugSearchParameters === true
+		|| window?.ISFWP_AI_SUMMARY_DEBUG === true;
 	const isEnabled =
 		frontendConfig?.provider === 'algolia'
 		&& !!aiSummariesConfig?.enabled
@@ -273,12 +303,14 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		&& !!container;
 
 	let summaryAbortController = null;
-	let lastSummaryQuery = '';
+	let lastSummaryRequestKey = '';
 	let summaryTimer = null;
 	let summaryExpanded = false;
 	let currentSummaryText = '';
 	let activeQuery = '';
+	let activeSearchParameters = { distinct: true };
 	let currentSummaryQuery = '';
+	let currentSummaryRequestKey = '';
 	let userSummariesDisabled = false;
 
 	try {
@@ -307,10 +339,10 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 			enableButton.addEventListener('click', () => {
 				setUserSummariesEnabled(true);
 				summaryExpanded = false;
-				lastSummaryQuery = '';
+				lastSummaryRequestKey = '';
 
 				if (activeQuery.trim().length >= 3 && currentSummaryQuery !== activeQuery) {
-					requestSummary(activeQuery);
+					requestSummary(activeQuery, activeSearchParameters);
 					return;
 				}
 
@@ -358,6 +390,7 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 			summaryExpanded = false;
 			currentSummaryText = '';
 			currentSummaryQuery = '';
+			currentSummaryRequestKey = '';
 			container.innerHTML = '';
 			container.setAttribute('hidden', 'hidden');
 			return;
@@ -369,6 +402,7 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 			summaryExpanded = false;
 			currentSummaryText = '';
 			currentSummaryQuery = '';
+			currentSummaryRequestKey = '';
 			container.innerHTML = `
 				<p class="isfwp-site-search-summary__status">
 					<span>${__('Generating summary', 'instantsearch-for-wp')}</span>
@@ -384,12 +418,14 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 			summaryExpanded = false;
 			currentSummaryText = '';
 			currentSummaryQuery = '';
+			currentSummaryRequestKey = '';
 			container.innerHTML = `<p class="isfwp-site-search-summary__status isfwp-site-search-summary__status--error">${error}</p>`;
 			return;
 		}
 
 		currentSummaryText = text;
 		currentSummaryQuery = activeQuery;
+		currentSummaryRequestKey = createSummaryRequestKey(activeQuery, activeSearchParameters);
 		const renderedText = formatSummaryMarkup(text);
 		const contentStateClass = summaryExpanded
 			? 'isfwp-site-search-summary__content--expanded'
@@ -460,7 +496,7 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		return tokenData.token;
 	};
 
-	const requestSummary = async (query) => {
+	const requestSummary = async (query, searchParameters = {}) => {
 		if (!isEnabled) {
 			return;
 		}
@@ -477,6 +513,15 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		if (!query || query.trim().length < 3) {
 			setSummaryState();
 			return;
+		}
+
+		activeSearchParameters = normalizeSearchParameters(searchParameters);
+
+		if (isDebugSearchParametersEnabled) {
+			console.info('ISFWP AI Summary request payload', {
+				query,
+				searchParameters: activeSearchParameters,
+			});
 		}
 
 		summaryAbortController = new AbortController();
@@ -508,9 +553,7 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 							content: query,
 						}
 					],
-					searchParameters: {
-						distinct: true,
-					},
+					searchParameters: activeSearchParameters,
 				}),
 				signal: summaryAbortController.signal,
 			});
@@ -561,34 +604,36 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		}
 	};
 
-	const handleQueryChange = (query) => {
+	const handleQueryChange = (query, searchParameters = {}) => {
 		if (!isEnabled) {
 			return;
 		}
 
 		activeQuery = query || '';
+		activeSearchParameters = normalizeSearchParameters(searchParameters);
+		const requestKey = createSummaryRequestKey(activeQuery, activeSearchParameters);
 
 		if (userSummariesDisabled) {
 			setSummaryState();
 			return;
 		}
 
-		if (query === lastSummaryQuery) {
-			if (currentSummaryQuery !== query) {
-				requestSummary(query);
+		if (requestKey === lastSummaryRequestKey) {
+			if (currentSummaryRequestKey !== requestKey) {
+				requestSummary(activeQuery, activeSearchParameters);
 			}
 			return;
 		}
 
 		summaryExpanded = false;
-		lastSummaryQuery = query;
+		lastSummaryRequestKey = requestKey;
 
 		if (summaryTimer) {
 			clearTimeout(summaryTimer);
 		}
 
 		summaryTimer = setTimeout(() => {
-			requestSummary(query);
+			requestSummary(activeQuery, activeSearchParameters);
 		}, 250);
 	};
 
@@ -604,8 +649,9 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		}
 
 		setSummaryState();
-		lastSummaryQuery = '';
+		lastSummaryRequestKey = '';
 		activeQuery = '';
+		activeSearchParameters = { distinct: true };
 	};
 
 	return {
