@@ -290,6 +290,9 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 	const summaryDisclaimer = typeof aiSummariesConfig?.disclaimer === 'string'
 		? aiSummariesConfig.disclaimer.trim()
 		: '';
+	const isDebugSearchParametersEnabled =
+		aiSummariesConfig?.debugSearchParameters === true
+		|| window?.ISFWP_AI_SUMMARY_DEBUG === true;
 	const isEnabled =
 		frontendConfig?.provider === 'algolia'
 		&& !!aiSummariesConfig?.enabled
@@ -513,6 +516,13 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		}
 
 		activeSearchParameters = normalizeSearchParameters(searchParameters);
+
+		if (isDebugSearchParametersEnabled) {
+			console.info('ISFWP AI Summary request payload', {
+				query,
+				searchParameters: activeSearchParameters,
+			});
+		}
 
 		summaryAbortController = new AbortController();
 		setSummaryState({ loading: true });
