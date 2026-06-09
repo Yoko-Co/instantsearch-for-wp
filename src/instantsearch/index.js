@@ -138,10 +138,13 @@ search.on('render', () => {
 
 	if (summaryController.isEnabled && search?.helper?.state) {
 		const query = search.helper.state.query || '';
+		const searchParameters = typeof search.helper.state.getQueryParams === 'function'
+			? search.helper.state.getQueryParams()
+			: {};
 		const hasHits = Number(search?.helper?.lastResults?.nbHits || 0) > 0;
 
 		if (hasHits) {
-			summaryController.handleQueryChange(query);
+			summaryController.handleQueryChange(query, searchParameters);
 		} else {
 			summaryController.reset();
 		}
