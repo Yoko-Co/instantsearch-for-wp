@@ -1,0 +1,290 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - navigation "Main menu":
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#wpbody-content"
+    - link "Skip to toolbar" [ref=e4] [cursor=pointer]:
+      - /url: "#wp-toolbar"
+    - list [ref=e7]:
+      - listitem [ref=e8]:
+        - link "Dashboard" [ref=e9] [cursor=pointer]:
+          - /url: index.php
+          - generic [ref=e10]: 
+          - generic [ref=e11]: Dashboard
+        - list [ref=e12]:
+          - listitem [ref=e13]:
+            - link "Home" [ref=e14] [cursor=pointer]:
+              - /url: index.php
+          - listitem [ref=e15]:
+            - link "Updates" [ref=e16] [cursor=pointer]:
+              - /url: update-core.php
+      - listitem [ref=e17]
+      - listitem [ref=e19]:
+        - link "Posts" [ref=e20] [cursor=pointer]:
+          - /url: edit.php
+          - generic [ref=e21]: 
+          - generic [ref=e22]: Posts
+        - list [ref=e23]:
+          - listitem [ref=e24]:
+            - link "All Posts" [ref=e25] [cursor=pointer]:
+              - /url: edit.php
+          - listitem [ref=e26]:
+            - link "Add Post" [ref=e27] [cursor=pointer]:
+              - /url: post-new.php
+          - listitem [ref=e28]:
+            - link "Categories" [ref=e29] [cursor=pointer]:
+              - /url: edit-tags.php?taxonomy=category
+          - listitem [ref=e30]:
+            - link "Tags" [ref=e31] [cursor=pointer]:
+              - /url: edit-tags.php?taxonomy=post_tag
+      - listitem [ref=e32]:
+        - link "Media" [ref=e33] [cursor=pointer]:
+          - /url: upload.php
+          - generic [ref=e34]: 
+          - generic [ref=e35]: Media
+        - list [ref=e36]:
+          - listitem [ref=e37]:
+            - link "Library" [ref=e38] [cursor=pointer]:
+              - /url: upload.php
+          - listitem [ref=e39]:
+            - link "Add Media File" [ref=e40] [cursor=pointer]:
+              - /url: media-new.php
+      - listitem [ref=e41]:
+        - link "Pages" [ref=e42] [cursor=pointer]:
+          - /url: edit.php?post_type=page
+          - generic [ref=e43]: 
+          - generic [ref=e44]: Pages
+        - list [ref=e45]:
+          - listitem [ref=e46]:
+            - link "All Pages" [ref=e47] [cursor=pointer]:
+              - /url: edit.php?post_type=page
+          - listitem [ref=e48]:
+            - link "Add Page" [ref=e49] [cursor=pointer]:
+              - /url: post-new.php?post_type=page
+      - listitem [ref=e50]:
+        - link "Comments" [ref=e51] [cursor=pointer]:
+          - /url: edit-comments.php
+          - generic [ref=e52]: 
+          - generic [ref=e53]: Comments
+      - listitem [ref=e54]:
+        - link "InstantSearch" [ref=e55] [cursor=pointer]:
+          - /url: admin.php?page=instantsearch-settings
+          - generic [ref=e56]: 
+          - generic [ref=e57]: InstantSearch
+      - listitem [ref=e58]
+      - listitem [ref=e60]:
+        - link "Appearance" [ref=e61] [cursor=pointer]:
+          - /url: themes.php
+          - generic [ref=e62]: 
+          - generic [ref=e63]: Appearance
+        - list [ref=e64]:
+          - listitem [ref=e65]:
+            - link "Themes" [ref=e66] [cursor=pointer]:
+              - /url: themes.php
+          - listitem [ref=e67]:
+            - link "Editor" [ref=e68] [cursor=pointer]:
+              - /url: site-editor.php
+      - listitem [ref=e69]:
+        - link "Plugins" [ref=e70] [cursor=pointer]:
+          - /url: plugins.php
+          - generic [ref=e71]: 
+          - generic [ref=e72]: Plugins
+        - list [ref=e73]:
+          - listitem [ref=e74]:
+            - link "Installed Plugins" [ref=e75] [cursor=pointer]:
+              - /url: plugins.php
+          - listitem [ref=e76]:
+            - link "Add Plugin" [ref=e77] [cursor=pointer]:
+              - /url: plugin-install.php
+      - listitem [ref=e78]:
+        - link "Users" [ref=e79] [cursor=pointer]:
+          - /url: users.php
+          - generic [ref=e80]: 
+          - generic [ref=e81]: Users
+        - list [ref=e82]:
+          - listitem [ref=e83]:
+            - link "All Users" [ref=e84] [cursor=pointer]:
+              - /url: users.php
+          - listitem [ref=e85]:
+            - link "Add User" [ref=e86] [cursor=pointer]:
+              - /url: user-new.php
+          - listitem [ref=e87]:
+            - link "Profile" [ref=e88] [cursor=pointer]:
+              - /url: profile.php
+      - listitem [ref=e89]:
+        - link "Tools" [ref=e90] [cursor=pointer]:
+          - /url: tools.php
+          - generic [ref=e91]: 
+          - generic [ref=e92]: Tools
+        - list [ref=e93]:
+          - listitem [ref=e94]:
+            - link "Available Tools" [ref=e95] [cursor=pointer]:
+              - /url: tools.php
+          - listitem [ref=e96]:
+            - link "Import" [ref=e97] [cursor=pointer]:
+              - /url: import.php
+          - listitem [ref=e98]:
+            - link "Export" [ref=e99] [cursor=pointer]:
+              - /url: export.php
+          - listitem [ref=e100]:
+            - link "Site Health" [ref=e101] [cursor=pointer]:
+              - /url: site-health.php
+          - listitem [ref=e102]:
+            - link "Export Personal Data" [ref=e103] [cursor=pointer]:
+              - /url: export-personal-data.php
+          - listitem [ref=e104]:
+            - link "Erase Personal Data" [ref=e105] [cursor=pointer]:
+              - /url: erase-personal-data.php
+          - listitem [ref=e106]:
+            - link "Scheduled Actions" [ref=e107] [cursor=pointer]:
+              - /url: tools.php?page=action-scheduler
+          - listitem [ref=e108]:
+            - link "Theme File Editor" [ref=e109] [cursor=pointer]:
+              - /url: theme-editor.php
+          - listitem [ref=e110]:
+            - link "Plugin File Editor" [ref=e111] [cursor=pointer]:
+              - /url: plugin-editor.php
+      - listitem [ref=e112]:
+        - link "Settings" [ref=e113] [cursor=pointer]:
+          - /url: options-general.php
+          - generic [ref=e114]: 
+          - generic [ref=e115]: Settings
+        - list [ref=e116]:
+          - listitem [ref=e117]:
+            - link "General" [ref=e118] [cursor=pointer]:
+              - /url: options-general.php
+          - listitem [ref=e119]:
+            - link "Writing" [ref=e120] [cursor=pointer]:
+              - /url: options-writing.php
+          - listitem [ref=e121]:
+            - link "Reading" [ref=e122] [cursor=pointer]:
+              - /url: options-reading.php
+          - listitem [ref=e123]:
+            - link "Discussion" [ref=e124] [cursor=pointer]:
+              - /url: options-discussion.php
+          - listitem [ref=e125]:
+            - link "Media" [ref=e126] [cursor=pointer]:
+              - /url: options-media.php
+          - listitem [ref=e127]:
+            - link "Permalinks" [ref=e128] [cursor=pointer]:
+              - /url: options-permalink.php
+          - listitem [ref=e129]:
+            - link "Privacy" [ref=e130] [cursor=pointer]:
+              - /url: options-privacy.php
+      - listitem [ref=e131]:
+        - button "Collapse Main menu" [expanded] [ref=e132] [cursor=pointer]:
+          - generic [ref=e134]: Collapse Menu
+  - generic [ref=e135]:
+    - generic [ref=e136]:
+      - navigation "Toolbar":
+        - menu:
+          - group [ref=e137]:
+            - menuitem "About WordPress" [ref=e138] [cursor=pointer]:
+              - generic [ref=e140]: About WordPress
+          - group [ref=e141]:
+            - menuitem "InstantSearchDev" [ref=e142] [cursor=pointer]
+          - group [ref=e143]:
+            - menuitem "0 Comments in moderation" [ref=e144] [cursor=pointer]:
+              - generic [ref=e146]: "0"
+              - generic [ref=e147]: 0 Comments in moderation
+          - group [ref=e148]:
+            - menuitem "New" [ref=e149] [cursor=pointer]:
+              - generic [ref=e151]: New
+          - group [ref=e152]:
+            - menuitem "View Media File" [ref=e153] [cursor=pointer]
+        - menu [ref=e154]:
+          - group [ref=e155]:
+            - menuitem "Howdy, admin" [ref=e156] [cursor=pointer]
+    - main [ref=e157]:
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - button "Screen Options" [ref=e161] [cursor=pointer]
+          - button "Help" [ref=e163] [cursor=pointer]
+        - generic [ref=e164]:
+          - heading "Edit Media" [level=1] [ref=e165]
+          - link "Add Media File" [ref=e166] [cursor=pointer]:
+            - /url: http://localhost:8080/wp-admin/media-new.php
+          - generic [ref=e167]:
+            - generic [ref=e168]: InstantSearch for WP
+            - generic [ref=e169] [cursor=pointer]:
+              - generic "Dismiss" [ref=e170]: 
+              - generic [ref=e171]: Dismiss
+            - generic [ref=e172]:
+              - text: We made a few tweaks to the plugin,
+              - link "Opt in to make \"InstantSearch for WP\" better!" [ref=e174] [cursor=pointer]:
+                - /url: http://localhost:8080/wp-admin/admin.php?page=instantsearch-settings
+          - generic [ref=e176]:
+            - generic:
+              - generic [ref=e177]:
+                - generic [ref=e178]:
+                  - generic [ref=e179]:
+                    - generic: Add title
+                    - textbox "Add title" [ref=e180]: E2E PDF Attachment
+                  - generic [ref=e182]:
+                    - strong [ref=e183]: "Permalink:"
+                    - link "http://localhost:8080/e2e-pdf-attachment-56/" [ref=e184] [cursor=pointer]:
+                      - /url: http://localhost:8080/e2e-pdf-attachment-56/
+                - paragraph [ref=e187]
+                - generic [ref=e188]:
+                  - paragraph [ref=e189]:
+                    - strong [ref=e191]: Caption
+                    - textbox "Caption" [ref=e192]
+                  - strong [ref=e194]: Description
+                  - generic [ref=e196]:
+                    - generic [ref=e197]:
+                      - button "Bold" [ref=e198] [cursor=pointer]: b
+                      - button "Italic" [ref=e199] [cursor=pointer]: i
+                      - button "Insert link" [ref=e200] [cursor=pointer]: link
+                      - button "Blockquote" [ref=e201] [cursor=pointer]: b-quote
+                      - button "Deleted text (strikethrough)" [ref=e202] [cursor=pointer]: del
+                      - button "Inserted text" [ref=e203] [cursor=pointer]: ins
+                      - button "Insert image" [ref=e204] [cursor=pointer]: img
+                      - button "Bulleted list" [ref=e205] [cursor=pointer]: ul
+                      - button "Numbered list" [ref=e206] [cursor=pointer]: ol
+                      - button "List item" [ref=e207] [cursor=pointer]: li
+                      - button "Code" [ref=e208] [cursor=pointer]: code
+                      - button "close tags" [ref=e209] [cursor=pointer]
+                    - textbox "Description" [ref=e210]
+              - generic [ref=e213]:
+                - generic [ref=e214]:
+                  - heading "Save" [level=2] [ref=e215]
+                  - generic [ref=e216]:
+                    - button "Move up" [disabled] [ref=e217]:
+                      - generic [ref=e218]: Move up
+                    - button "Move down" [ref=e220] [cursor=pointer]:
+                      - generic [ref=e221]: Move down
+                    - 'button "Toggle panel: Save" [expanded] [ref=e223] [cursor=pointer]':
+                      - generic [ref=e224]: "Toggle panel: Save"
+                - generic [ref=e227]:
+                  - generic [ref=e229]:
+                    - generic [ref=e231]: "Uploaded on: Mar 31, 2026 at 12:26"
+                    - generic [ref=e232]:
+                      - text: "Uploaded by:"
+                      - strong [ref=e233]: (no author)
+                    - generic [ref=e234]:
+                      - text: "File URL:"
+                      - textbox "File URL:" [ref=e235]: http://localhost:8080/e2e-pdf-attachment-56/
+                      - button "Copy URL to clipboard" [ref=e237] [cursor=pointer]
+                    - link "Download file" [ref=e239] [cursor=pointer]:
+                      - /url: http://localhost:8080/e2e-pdf-attachment-56/
+                    - generic [ref=e240]:
+                      - text: "File name:"
+                      - strong
+                    - generic [ref=e241]:
+                      - text: "File type:"
+                      - strong [ref=e242]: APPLICATION/PDF
+                  - generic [ref=e243]:
+                    - link "Delete permanently" [ref=e245] [cursor=pointer]:
+                      - /url: http://localhost:8080/wp-admin/post.php?post=71&action=delete&_wpnonce=22d7a046de
+                    - button "Update" [ref=e247] [cursor=pointer]
+  - contentinfo [ref=e251]:
+    - paragraph [ref=e252]:
+      - generic [ref=e253]:
+        - text: Thank you for creating with
+        - link "WordPress" [ref=e254] [cursor=pointer]:
+          - /url: https://wordpress.org/
+        - text: .
+    - paragraph [ref=e255]: Version 6.9.4
+```
