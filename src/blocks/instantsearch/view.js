@@ -148,13 +148,57 @@ function isHiddenByBlockVisibility( element ) {
 	return isHidden;
 }
 
-function withFacetPanel( widgetFactory, container, config, widgetOptions ) {
+function getFacetPanelLabelMetadata( container, config, labelTargetSelector = '' ) {
+	const instanceId = slugifyFacetClassPart(
+		container.closest( '.isfwp-block-instance' )?.dataset.isfwpInstance || 'instance'
+	);
+	const widgetType = slugifyFacetClassPart( container.dataset.isfwpWidget || 'facet' );
+	const attribute = slugifyFacetClassPart( config.attribute || 'attribute' );
+	const baseId = [ 'isfwp', instanceId, widgetType, attribute ].filter( Boolean ).join( '-' );
+
+	return {
+		controlId: labelTargetSelector ? `${ baseId }-control` : '',
+		labelId: `${ baseId }-label`,
+		labelTargetSelector,
+	};
+}
+
+function syncFacetPanelLabelWithControl( container ) {
+	const labelTargetSelector = container.dataset.isfwpLabelTargetSelector || '';
+	const controlId = container.dataset.isfwpLabelControlId || '';
+	const labelId = container.dataset.isfwpLabelId || '';
+
+	if ( ! labelTargetSelector || ! controlId || ! labelId ) {
+		return;
+	}
+
+	const control = container.querySelector( labelTargetSelector );
+	if ( ! control ) {
+		return;
+	}
+
+	control.id = controlId;
+	control.setAttribute( 'aria-labelledby', labelId );
+}
+
+function withFacetPanel( widgetFactory, container, config, widgetOptions, labelTargetSelector = '' ) {
 	const label = config.label || config.attribute || '';
 	const hideWhenEmpty = config.hideWhenEmpty !== false;
+	const { controlId, labelId } = getFacetPanelLabelMetadata( container, config, labelTargetSelector );
+
+	container.dataset.isfwpLabelId = labelId;
+	container.dataset.isfwpLabelControlId = controlId;
+	container.dataset.isfwpLabelTargetSelector = labelTargetSelector;
 
 	return panel( {
 		templates: {
-			header: label,
+			header( options, { html } ) {
+				if ( controlId ) {
+					return html`<label id="${ labelId }" for="${ controlId }">${ label }</label>`;
+				}
+
+				return html`<span id="${ labelId }">${ label }</span>`;
+			},
 		},
 		hidden( options ) {
 			return hideWhenEmpty && Array.isArray( options.items ) && options.items.length === 0;
@@ -446,7 +490,7 @@ const WIDGET_FACTORIES = {
 			attribute: config.attribute || 'post_type',
 			limit: config.limit || 10,
 			sortBy: config.sortBy || [ 'name:asc', 'count:desc' ],
-		} );
+		}, 'select' );
 	},
 
 	configure( container, config ) {
@@ -705,6 +749,7 @@ function initInstance( container ) {
 
 		setEmptySearchMessageVisibility( container, shouldHideEmptyState, emptySearchMessage, hitsAnchor );
 		container.classList.toggle( 'isfwp-hits-pending', Boolean( isPendingRequest ) );
+		container.querySelectorAll( '[data-isfwp-label-target-selector]' ).forEach( syncFacetPanelLabelWithControl );
 		updateFacetClassesOnContainer( container, state );
 	} );
 
