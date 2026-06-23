@@ -352,11 +352,16 @@ class AlgoliaConnector extends AbstractConnector {
 	 *
 	 * Use a search based delete in order to delete by postID.
 	 *
-	 * @param array $post_ids Array of post IDs to delete.
+	 * @param array      $post_ids Array of post IDs to delete.
+	 * @param Index|null $index    Optional index to delete from. Defaults to the default index.
 	 *
 	 * @return void
 	 */
 	public function delete_posts( array $post_ids, $index = null ) {
+		if ( null === $index ) {
+			$index = new Index();
+		}
+
 		// Use Browse API to find all redords with postID in $post_ids and delete them.
 		$filters = implode(
 			' OR ',
