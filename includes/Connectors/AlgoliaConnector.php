@@ -219,6 +219,23 @@ class AlgoliaConnector extends AbstractConnector {
 
 			if ( $record ) {
 				$content_chunks = $this->chunk_text_by_sentences( $record['content'] ?? '', 500, true );
+
+				// Final safety net: guarantee no chunk exceeds the provider's
+				// per-record byte limit, even when source text (e.g. extracted
+				// PDF text) lacks the sentence/word boundaries the chunker relies
+				// on. Splitting (rather than truncating) preserves all text
+				// across the resulting records.
+				$max_content_bytes = (int) apply_filters( 'instantsearch_max_record_content_bytes', 90000, $index );
+				if ( $max_content_bytes > 0 ) {
+					$bounded_chunks = array();
+					foreach ( $content_chunks as $chunk ) {
+						foreach ( $this->split_by_max_bytes( $chunk, $max_content_bytes ) as $piece ) {
+							$bounded_chunks[] = $piece;
+						}
+					}
+					$content_chunks = $bounded_chunks;
+				}
+
 				if ( count( $content_chunks ) > 1 ) {
 					foreach ( $content_chunks as $chunk ) {
 						$chunked_record            = $record;
@@ -245,6 +262,42 @@ class AlgoliaConnector extends AbstractConnector {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Split a UTF-8 string into pieces no larger than the given byte size.
+	 *
+	 * Uses byte-aware cutting that never breaks a multibyte character, so the
+	 * resulting pieces remain valid UTF-8 and reassemble to the original text.
+	 *
+	 * @param string $text      The input text.
+	 * @param int    $max_bytes Maximum byte length per piece.
+	 *
+	 * @return array Array of text pieces, each within the byte limit.
+	 */
+	private function split_by_max_bytes( string $text, int $max_bytes ): array {
+		if ( $max_bytes <= 0 || '' === $text ) {
+			return '' === $text ? array() : array( $text );
+		}
+
+		if ( strlen( $text ) <= $max_bytes ) {
+			return array( $text );
+		}
+
+		$pieces = array();
+		$offset = 0;
+		$total  = strlen( $text );
+
+		while ( $offset < $total ) {
+			$piece = mb_strcut( $text, $offset, $max_bytes, 'UTF-8' );
+			if ( '' === $piece ) {
+				break; // Safety: avoid an infinite loop on pathological input.
+			}
+			$pieces[] = $piece;
+			$offset  += strlen( $piece );
+		}
+
+		return $pieces;
 	}
 
 	/**
