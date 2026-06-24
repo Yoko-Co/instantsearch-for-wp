@@ -81,6 +81,29 @@ abstract class AbstractConnector {
 		// Use a regex to split the text into sentences.
 		$sentences = preg_split( '/(?<=[.?!])\s+(?=[A-Z])/', $text );
 
+		// A single "sentence" can exceed the target chunk size when the text
+		// lacks sentence boundaries (common in extracted PDF text, tables, or
+		// OCR output). Split any oversized fragment on word boundaries so no
+		// individual chunk can grow unbounded.
+		$bounded_sentences = array();
+		foreach ( (array) $sentences as $sentence ) {
+			$sentence = trim( $sentence );
+			if ( '' === $sentence ) {
+				continue;
+			}
+
+			if ( str_word_count( $sentence ) > $words_per_chunk ) {
+				$words = preg_split( '/\s+/', $sentence );
+				foreach ( array_chunk( $words, $words_per_chunk ) as $word_group ) {
+					$bounded_sentences[] = implode( ' ', $word_group );
+				}
+				continue;
+			}
+
+			$bounded_sentences[] = $sentence;
+		}
+		$sentences = $bounded_sentences;
+
 		$chunks             = array();
 		$current_chunk      = '';
 		$current_word_count = 0;
