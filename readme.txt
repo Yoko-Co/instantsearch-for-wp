@@ -40,5 +40,8 @@ directory take precedence. For example, `/assets/screenshot-1.png` would win ove
 
 == Changelog ==
 
+= 1.0.1 =
+* Fix: Prevent a PHP warning ("Attempt to read property \"name\" on null") when deleting posts from the Algolia index without an explicit index. `delete_posts()` now falls back to the default index, matching `index_posts()`.
+
 = 1.0.0 =
 * Initial Launch
