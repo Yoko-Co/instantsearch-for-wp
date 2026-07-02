@@ -13,6 +13,7 @@ import AdminNavigation from './AdminNavigation';
 import { useAdminContext } from './AdminContext';
 import SearchConfiguration from './SearchConfiguration';
 import AdminIndexes from './AdminIndexes';
+import TryV2Notice from './TryV2Notice';
 
 const AdminApp = () => {
     const [activeScreen, setActiveScreen] = useState('index');
@@ -82,9 +83,11 @@ const AdminApp = () => {
 
     return (
         <div id="instantsearch-admin">
-			
+
+			<TryV2Notice />
+
 			<Notices />
-			
+
 			<Card className="instantsearch-admin__page">
 				<CardBody className="instantsearch-admin__navigation">
 					<AdminNavigation currentScreen={activeScreen} handleScreenChange={handleScreenChange} />

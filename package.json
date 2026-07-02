@@ -55,12 +55,13 @@
     "@wordpress/i18n": "^6.4.0",
     "@wordpress/icons": "^10.31.0",
     "@wordpress/notices": "^5.31.0",
-    "body-scroll-lock": "^4.0.0-beta.0",
+    "@wordpress/scripts": "^30.12.0",
     "a11y-dialog": "^8.1.4",
     "ai": "^6.0.133",
-    "marked": "^17.0.5",
+    "body-scroll-lock": "^4.0.0-beta.0",
     "instantsearch.css": "^8.5.1",
     "instantsearch.js": "^4.7.0",
-    "@wordpress/scripts": "^30.12.0"
+    "marked": "^17.0.5",
+    "react-router-dom": "^6.30.4"
   }
 }

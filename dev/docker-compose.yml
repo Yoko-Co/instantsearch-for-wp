@@ -76,8 +76,12 @@ services:
         define( 'INSTANTSEARCH_FOR_WP_PROVIDER', '${SEARCH_PROVIDER:-typesense}' );
         /* Algolia (if using Algolia provider) */
         define( 'ALGOLIA_APP_ID',              '${ALGOLIA_APP_ID:-}' );
-        define( 'ALGOLIA_API_KEY',             '${ALGOLIA_SEARCH_ONLY_API_KEY:-}' );
+        /* Note: the plugin treats ALGOLIA_API_KEY as the write (admin) key. */
+        define( 'ALGOLIA_API_KEY',             '${ALGOLIA_ADMIN_API_KEY:-}' );
+        define( 'ALGOLIA_SEARCH_ONLY_API_KEY', '${ALGOLIA_SEARCH_ONLY_API_KEY:-}' );
         define( 'ALGOLIA_ADMIN_API_KEY',       '${ALGOLIA_ADMIN_API_KEY:-}' );
+        /* Unlock premium features (multi-index) in the dev environment. */
+        define( 'INSTANTSEARCH_FOR_WP_UNLOCK_PREMIUM', ${UNLOCK_PREMIUM:-true} );
         /* Typesense (local Docker service) */
         define( 'TYPESENSE_HOST',     'typesense' );
         define( 'TYPESENSE_PORT',     '8108' );
