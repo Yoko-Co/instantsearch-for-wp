@@ -188,6 +188,11 @@ class AlgoliaConnector extends AbstractConnector {
 			$index = new Index();
 		}
 
+		// Without a resolvable index name there is nothing to write to.
+		if ( empty( $index->name ) ) {
+			return null;
+		}
+
 		if ( ! empty( $index->index_settings['post_types'] ) ) {
 			// Filter post IDs by post type for this index.
 			$post_ids = array_filter(
@@ -412,8 +417,27 @@ class AlgoliaConnector extends AbstractConnector {
 	 * @return void
 	 */
 	public function delete_posts( array $post_ids, $index = null ) {
+		// Without an index context (e.g. the `instantsearch_delete_posts`
+		// action after a post is deleted), remove the records from every
+		// configured index.
 		if ( null === $index ) {
-			$index = new Index();
+			$index_posts = get_posts(
+				array(
+					'post_type'      => Index::$cpt_slug,
+					'posts_per_page' => -1,
+					'post_status'    => 'publish',
+				)
+			);
+
+			foreach ( $index_posts as $index_post ) {
+				$this->delete_posts( $post_ids, new Index( $index_post->ID ) );
+			}
+
+			return;
+		}
+
+		if ( empty( $index->name ) ) {
+			return;
 		}
 
 		// Use Browse API to find all redords with postID in $post_ids and delete them.
@@ -650,5 +674,28 @@ class AlgoliaConnector extends AbstractConnector {
 	 */
 	public function clear_index( $index_name = null ) {
 		$this->client->clearObjects( $index_name );
+	}
+
+	/**
+	 * Delete an index from the Algolia application entirely.
+	 *
+	 * Used when an index CPT is permanently deleted from the dashboard.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string $index_name Index name to delete.
+	 *
+	 * @return void
+	 */
+	public function delete_index( $index_name ) {
+		if ( empty( $this->client ) || ! method_exists( $this->client, 'deleteIndex' ) || empty( $index_name ) ) {
+			return;
+		}
+
+		try {
+			$this->client->deleteIndex( $index_name );
+		} catch ( \Throwable $th ) {
+			error_log( 'InstantSearch for WP: failed to delete Algolia index ' . $index_name . ': ' . $th->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
 	}
 }

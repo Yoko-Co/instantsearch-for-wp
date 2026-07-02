@@ -71,7 +71,7 @@ class Indexer {
 		add_action( 'delete_attachment', array( $this, 'delete_post' ) );
 		add_action( 'trashed_post', array( $this, 'delete_post' ) );
 		add_action( 'delete_post', array( $this, 'delete_post' ) );
-
+		add_action( 'before_delete_post', array( $this, 'delete_remote_index_for_cpt' ), 10, 2 );
 		add_action( 'shutdown', array( $this, 'index_or_delete_posts' ) );
 
 		$this->provider = $this->get_provider();
@@ -277,8 +277,12 @@ class Indexer {
 		$index_objects = $this->get_all_index_objects();
 
 		if ( empty( $index_objects ) ) {
-			// No indices configured – fall back to provider-level processing without index context.
-			return $this->process_for_index( $post_ids, $delete_post_ids, null );
+			// No indices configured – nothing to sync. Bailing avoids calling the
+			// provider with an empty index name (which would fail on shutdown).
+			return array(
+				'indexed' => null,
+				'deleted' => null,
+			);
 		}
 
 		$results = array();
@@ -382,5 +386,32 @@ class Indexer {
 				return array_values( array_unique( $post_ids ) );
 			}
 		);
+	}
+
+	/**
+	 * Delete the remote search index when an index CPT is permanently deleted.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param int      $post_id Post ID being deleted.
+	 * @param \WP_Post $post    Post object being deleted.
+	 *
+	 * @return void
+	 */
+	public function delete_remote_index_for_cpt( $post_id, $post = null ) {
+		$post = $post ? $post : get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || Index::$cpt_slug !== $post->post_type ) {
+			return;
+		}
+
+		if ( ! $this->provider || ! method_exists( $this->provider, 'delete_index' ) ) {
+			return;
+		}
+
+		$index = new Index( $post_id );
+		if ( $index->name ) {
+			$this->provider->delete_index( $index->name );
+		}
 	}
 }
