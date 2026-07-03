@@ -189,38 +189,6 @@ search.addWidgets([
 	})
 ]);
 
-if ( conversationalAgentId ) {
-	search.addWidgets([
-		chatTrigger({
-			container: '#algolia-chat-trigger',
-			floating: false,
-			cssClasses: {
-				button: chatTriggerButtonClassName,
-			},
-		}),
-		chat({
-			container: '#algolia-chat',
-			agentId: conversationalAgentId,
-			resume: true,
-			context: () => ({
-				currentPage: window.location.pathname,
-				locale: navigator.language || 'en',
-			}),
-			templates: {
-				item(hit, { html }) {
-					const title = String(hit?.title || '').trim();
-
-					return html`<span>${title || __('Untitled result', 'instantsearch-for-wp')}</span>`;
-				},
-				loaderText: __( 'Thinking...', 'instantsearch-for-wp' ),
-				prompt: {
-					textareaPlaceholderText: __( 'Ask AI anything', 'instantsearch-for-wp' ),
-				},
-			},
-		})
-	]);
-}
-
 if ( ! instantSearchForWPFrontend?.hidePoweredBy ) {
 	search.addWidgets([
 		poweredBy({
@@ -330,10 +298,49 @@ document.querySelectorAll(instantSearchForWPFrontend.searchTriggerQuerySelectors
 	});
 });
 
-if ( conversationalAgentId ) {
-	await search.start();
-	isInitialized = true;
-}
-
 window.isfwpSiteSearch = { dialog, search };
+
+if ( conversationalAgentId ) {
+	// Initiate InstantSearch instance
+	const aiSearch = instantsearch({
+		indexName: instantSearchForWPFrontend.indexName,
+		searchClient: algoliasearch(instantSearchForWPFrontend.appId, instantSearchForWPFrontend.apiKey),
+		future: {
+			preserveSharedStateOnUnmount: true,
+		}
+	});
+
+	aiSearch.addWidgets([
+		chatTrigger({
+			container: '#algolia-chat-trigger',
+			floating: false,
+			cssClasses: {
+				button: chatTriggerButtonClassName,
+			},
+		}),
+		chat({
+			container: '#algolia-chat',
+			agentId: conversationalAgentId,
+			resume: false,
+			context: () => ({
+				currentPage: window.location.pathname,
+				locale: navigator.language || 'en',
+			}),
+			templates: {
+				item(hit, { html }) {
+					const title = String(hit?.title || '').trim();
+
+					return html`<span>${title || __('Untitled result', 'instantsearch-for-wp')}</span>`;
+				},
+				loaderText: __( 'Thinking...', 'instantsearch-for-wp' ),
+				prompt: {
+					textareaPlaceholderText: __( 'Ask AI anything', 'instantsearch-for-wp' ),
+				},
+			},
+		})
+	]);
+	await aiSearch.start();
+
+	window.isfwpSiteSearch.aiSearch = aiSearch;
+}
 
