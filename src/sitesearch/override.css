@@ -7,3 +7,30 @@
 .modal-backdrop-askai {
 	z-index: 999999 !important;
 }
+
+/*
+ * Persistent "Thinking…" loader during Ask AI answer generation.
+ *
+ * The vendored widget only shows its own "Thinking…" text until the
+ * assistant-message object is created (~1s after submit). Once the AI SDK
+ * opens the stream, the widget switches to rendering the message's parts —
+ * but if the agent hasn't streamed anything yet (e.g. a multi-step Agent
+ * Studio agent that returns its answer at the end), the bubble is empty and
+ * the loader disappears, leaving a blank gap until the answer arrives.
+ *
+ * An empty, still-generating answer bubble is `.ss-qa-markdown:empty`. We
+ * fill it with a shimmering "Thinking…" placeholder. As soon as the first
+ * token streams in the bubble is no longer :empty, so this vanishes on its
+ * own with no JS and no dependency on widget internals.
+ */
+.ss-qa-answer-content .ss-qa-markdown:empty::after {
+	content: "Thinking…";
+	display: inline-block;
+	opacity: 0.65;
+	animation: isfwp-askai-thinking 1.2s ease-in-out infinite;
+}
+
+@keyframes isfwp-askai-thinking {
+	0%, 100% { opacity: 0.35; }
+	50%      { opacity: 0.85; }
+}
