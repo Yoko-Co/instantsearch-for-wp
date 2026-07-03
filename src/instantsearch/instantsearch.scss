@@ -1,7 +1,7 @@
 /* Import the InstantSearch styles */
 @use '../styles/tokens';
 @import 'instantsearch.css/themes/reset.css';
-// @import 'instantsearch.css/components/chat.css'; // Not available in installed version
+@import 'instantsearch.css/components/chat.css';
 
 #isfwp-site-search {
 	position: fixed;
@@ -326,6 +326,22 @@
 	color: var( --isfwp-color-danger );
 }
 
+.isfwp-chat-trigger-button {
+	position: fixed;
+	bottom: 24px;
+	z-index: 10000000;
+}
+
+.isfwp-chat-trigger-button--right {
+	right: 24px;
+	left: auto;
+}
+
+.isfwp-chat-trigger-button--left {
+	left: 24px;
+	right: auto;
+}
+
 /* InstantSearch Styles */
 
 .ais-SearchBox-form {
@@ -445,4 +461,13 @@ input.ais-RefinementList-checkbox {
 		outline: 3px solid var( --isfwp-color-accent );
 		outline-offset: 2px;
 	}
+}
+
+
+.ais-Chat {
+	z-index: 999999;
+}
+
+.ais-ChatMessage-tool {
+	display: none !important;
 }

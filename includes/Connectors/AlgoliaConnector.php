@@ -77,6 +77,7 @@ class AlgoliaConnector extends AbstractConnector {
 			'hide_algolia_badge'  => false,
 			'ai_summaries_enabled' => false,
 			'ask_ai_agent_id'      => '',
+			'conversational_search_agent_id' => '',
 			'ai_disclaimer'        => $default_ai_disclaimer,
 		);
 		return $default_settings;
@@ -116,6 +117,10 @@ class AlgoliaConnector extends AbstractConnector {
 					'default' => false,
 				),
 				'ask_ai_agent_id' => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'conversational_search_agent_id' => array(
 					'type'    => 'string',
 					'default' => '',
 				),

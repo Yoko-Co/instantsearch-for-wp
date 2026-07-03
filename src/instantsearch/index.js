@@ -4,6 +4,8 @@ import A11yDialog from 'a11y-dialog';
 import instantsearch from 'instantsearch.js';
 import { algoliasearch } from 'algoliasearch';
 import {
+	chat,
+	chatTrigger,
 	clearRefinements,
 	configure,
 	dynamicWidgets,
@@ -22,6 +24,11 @@ const container = document.getElementById('isfwp-site-search');
 const dialog = new A11yDialog(container);
 let isInitialized = false;
 let hasSubmittedSearch = false;
+const conversationalAgentId = instantSearchForWPFrontend?.conversationalSearch || false;
+const chatTriggerPosition = instantSearchForWPFrontend?.conversationalChatTriggerPosition === 'left' ? 'left' : 'right';
+const chatTriggerButtonClassName = 'left' === chatTriggerPosition
+	? 'isfwp-chat-trigger-button isfwp-chat-trigger-button--left'
+	: 'isfwp-chat-trigger-button isfwp-chat-trigger-button--right';
 
 const summaryController = createAiSummaryController({
 	container: document.getElementById('isfwp-site-search-summary'),
@@ -162,6 +169,7 @@ search.addWidgets([
 	searchBox({
 		container: '#isfwp-site-search-input',
 		placeholder: instantSearchForWPFrontend?.sitesearchSettings?.placeholder_text || 'Search...',
+		aiMode: false,
 		searchAsYouType: instantSearchForWPFrontend?.sitesearchSettings?.debounce_delay
 				&& instantSearchForWPFrontend.sitesearchSettings.debounce_delay > 0 ? true : false, // Disable search as you type if debounce is enabled, we'll handle it in queryHook.
 		showSubmit: true,
@@ -180,6 +188,38 @@ search.addWidgets([
 		},
 	})
 ]);
+
+if ( conversationalAgentId ) {
+	search.addWidgets([
+		chatTrigger({
+			container: '#algolia-chat-trigger',
+			floating: false,
+			cssClasses: {
+				button: chatTriggerButtonClassName,
+			},
+		}),
+		chat({
+			container: '#algolia-chat',
+			agentId: conversationalAgentId,
+			resume: true,
+			context: () => ({
+				currentPage: window.location.pathname,
+				locale: navigator.language || 'en',
+			}),
+			templates: {
+				item(hit, { html }) {
+					const title = String(hit?.title || '').trim();
+
+					return html`<span>${title || __('Untitled result', 'instantsearch-for-wp')}</span>`;
+				},
+				loaderText: __( 'Thinking...', 'instantsearch-for-wp' ),
+				prompt: {
+					textareaPlaceholderText: __( 'Ask AI anything', 'instantsearch-for-wp' ),
+				},
+			},
+		})
+	]);
+}
 
 if ( ! instantSearchForWPFrontend?.hidePoweredBy ) {
 	search.addWidgets([
@@ -223,8 +263,6 @@ search.on('render', () => {
 		}
 	}
 });
-
-// chat widget disabled — not available in installed instantsearch.js version
 
 // Initialize search on dialog show
 dialog.on('show', async () => {
@@ -291,6 +329,11 @@ document.querySelectorAll(instantSearchForWPFrontend.searchTriggerQuerySelectors
 		dialog.show();
 	});
 });
+
+if ( conversationalAgentId ) {
+	await search.start();
+	isInitialized = true;
+}
 
 window.isfwpSiteSearch = { dialog, search };
 
