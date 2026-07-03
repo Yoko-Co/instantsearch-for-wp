@@ -12,7 +12,7 @@ const FeatureList = [
         <p>Shorthands for creating CTPs, Taxonomies, and syncs.</p>
 		<Link
 			className="button button--secondary button--lg"
-			to="/docs/category/code-tools">
+      to="/docs/intro">
 			View Tools
 		</Link>
       </>
@@ -26,7 +26,7 @@ const FeatureList = [
         <p>Custom Beaver Builder modules to deliver tools our clients frequently request.</p>
 		<Link
 			className="button button--secondary button--lg"
-			to="/docs/category/beaver-builder">
+      to="/docs/ai-agent-integrations">
 			View Modules
 		</Link>
       </>
@@ -40,7 +40,7 @@ const FeatureList = [
         <p>Super Admin tools for Clients and Yoko Co team members to help monitor and maintain sites.</p>
 		<Link
 			className="button button--secondary button--lg"
-			to="/docs/category/admin">
+      to="/docs/sitesearch-filters">
 			View Admin Tools
 		</Link>
       </>

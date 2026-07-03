@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Documentation tree illustration">
+  <rect width="320" height="220" fill="#f4f7fb"/>
+  <rect x="140" y="145" width="40" height="45" fill="#8d6e63"/>
+  <circle cx="160" cy="95" r="56" fill="#81c784"/>
+  <circle cx="120" cy="105" r="36" fill="#66bb6a"/>
+  <circle cx="200" cy="108" r="34" fill="#66bb6a"/>
+  <text x="160" y="208" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#334155">Code Tools</text>
+</svg>

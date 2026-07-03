@@ -19,6 +19,8 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 	const [useSearchSettings, setUseSearchSettings] = useState({
 		algolia: settings?.algolia || {},
 		use_as_sitesearch: settings?.use_as_sitesearch || false,
+		search_experience: settings?.search_experience || 'instant_search',
+		sitesearch_options: settings?.sitesearch_options || {},
 		sitesearch_settings: settings?.sitesearch_settings || {}
 	});
 
@@ -26,9 +28,35 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 		setUseSearchSettings({
 			algolia: settings?.algolia || {},
 			use_as_sitesearch: settings?.use_as_sitesearch || false,
+			search_experience: settings?.search_experience || 'instant_search',
+			sitesearch_options: settings?.sitesearch_options || {},
 			sitesearch_settings: settings?.sitesearch_settings || {}
 		});
-	}, [settings?.use_as_sitesearch, settings?.sitesearch_settings, settings?.algolia]);
+	}, [settings?.use_as_sitesearch, settings?.sitesearch_settings, settings?.algolia, settings?.search_experience, settings?.sitesearch_options]);
+
+	const searchExperience = useSearchSettings?.search_experience || 'instant_search';
+	const isSiteSearchExperience = searchExperience !== 'instant_search';
+	const isAskAiExperience = ['sitesearch_askai', 'sitesearch_sidepanel'].includes(searchExperience);
+	const hasAskAiAgent = !!(useSearchSettings?.algolia?.ask_ai_agent_id);
+
+	const setSiteSearchOption = (key, value) => setUseSearchSettings((prev) => ({
+		...prev,
+		sitesearch_options: {
+			...prev.sitesearch_options,
+			[key]: value,
+		}
+	}));
+
+	const setSiteSearchAttribute = (key, value) => setUseSearchSettings((prev) => ({
+		...prev,
+		sitesearch_options: {
+			...prev.sitesearch_options,
+			attributes: {
+				...(prev.sitesearch_options?.attributes || {}),
+				[key]: value,
+			},
+		}
+	}));
 	
 	const saveSearchSettings = async () => {
 		setLoading(true);
@@ -83,6 +111,126 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 				useSearchSettings?.use_as_sitesearch && (
 					<>
 						<p>{__('Instant Search is enabled. Your site search will now use Instant Search for WP.', 'instantsearch-for-wp')}</p>
+
+						{ provider === 'algolia' && (
+							<SelectControl
+								label={__('Search Experience', 'instantsearch-for-wp')}
+								help={__('The built-in experience includes the facet sidebar and AI summaries. Algolia SiteSearch experiences are prebuilt, keyboard-friendly UIs (⌘K / Ctrl+K) from the SiteSearch library.', 'instantsearch-for-wp')}
+								value={searchExperience}
+								options={[
+									{ label: __('Built-in Instant Search (sidebar + facets)', 'instantsearch-for-wp'), value: 'instant_search' },
+									{ label: __('Algolia SiteSearch — Search modal (⌘K)', 'instantsearch-for-wp'), value: 'sitesearch_modal' },
+									{ label: hasAskAiAgent
+										? __('Algolia SiteSearch — Search with Ask AI', 'instantsearch-for-wp')
+										: __('Algolia SiteSearch — Search with Ask AI (requires Ask AI Agent ID)', 'instantsearch-for-wp'), value: 'sitesearch_askai', disabled: !hasAskAiAgent },
+									{ label: hasAskAiAgent
+										? __('Algolia SiteSearch — Sidepanel Ask AI', 'instantsearch-for-wp')
+										: __('Algolia SiteSearch — Sidepanel Ask AI (requires Ask AI Agent ID)', 'instantsearch-for-wp'), value: 'sitesearch_sidepanel', disabled: !hasAskAiAgent },
+								]}
+								onChange={(value) => setUseSearchSettings((prev) => ({ ...prev, search_experience: value }))}
+								__next40pxDefaultSize
+							/>
+						) }
+
+						{ isSiteSearchExperience && (
+							<>
+								<h3>{__('Algolia SiteSearch Options', 'instantsearch-for-wp')}</h3>
+								<p>{__('SiteSearch renders its own accessible search button and modal. Place the button anywhere with the "InstantSearch Search Button" block, or let the floating fallback handle it. The facet sidebar, AI summaries, and Powered-by badge settings below do not apply to SiteSearch experiences.', 'instantsearch-for-wp')}</p>
+								{ searchExperience === 'sitesearch_modal' && (
+									<TextControl
+										label={__('Button Text', 'instantsearch-for-wp')}
+										value={useSearchSettings?.sitesearch_options?.button_text ?? __('Search', 'instantsearch-for-wp')}
+										onChange={(value) => setSiteSearchOption('button_text', value)}
+									/>
+								) }
+								<TextControl
+									label={__('Search Input Placeholder Text', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_options?.placeholder_text ?? __('Search…', 'instantsearch-for-wp')}
+									onChange={(value) => setSiteSearchOption('placeholder_text', value)}
+								/>
+								<NumberControl
+									label={__('Hits Per Page', 'instantsearch-for-wp')}
+									min={1}
+									max={50}
+									value={useSearchSettings?.sitesearch_options?.hits_per_page ?? 10}
+									onChange={(value) => setSiteSearchOption('hits_per_page', parseInt(value, 10) || 10)}
+								/>
+								<SelectControl
+									label={__('Color Scheme', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_options?.dark_mode || 'light'}
+									options={[
+										{ label: __('Light', 'instantsearch-for-wp'), value: 'light' },
+										{ label: __('Dark', 'instantsearch-for-wp'), value: 'dark' },
+										{ label: __('Match visitor preference (auto)', 'instantsearch-for-wp'), value: 'auto' },
+									]}
+									onChange={(value) => setSiteSearchOption('dark_mode', value)}
+								/>
+								<ToggleControl
+									label={__('Send Algolia Insights events', 'instantsearch-for-wp')}
+									help={__('Click and conversion analytics for the SiteSearch UI.', 'instantsearch-for-wp')}
+									checked={useSearchSettings?.sitesearch_options?.insights ?? true}
+									onChange={(value) => setSiteSearchOption('insights', !!value)}
+								/>
+								<TextControl
+									label={__('Search Trigger CSS Selectors', 'instantsearch-for-wp')}
+									help={__('Comma-separated CSS selectors for existing theme elements (nav links, page-builder buttons) that should open the SiteSearch modal when clicked.', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_settings?.trigger_selectors ?? '.isfwp-search-trigger'}
+									onChange={(value) => setUseSearchSettings((prev) => ({
+										...prev,
+										sitesearch_settings: {
+											...prev.sitesearch_settings,
+											trigger_selectors: value,
+										}
+									}))}
+								/>
+								{ isAskAiExperience && (
+									<>
+										<ToggleControl
+											label={__('Show suggested questions', 'instantsearch-for-wp')}
+											checked={useSearchSettings?.sitesearch_options?.suggested_questions_enabled ?? true}
+											onChange={(value) => setSiteSearchOption('suggested_questions_enabled', !!value)}
+										/>
+										<ToggleControl
+											label={__('Use Agent Studio endpoints', 'instantsearch-for-wp')}
+											help={__('Enable if your assistant runs on Algolia Agent Studio instead of Ask AI.', 'instantsearch-for-wp')}
+											checked={useSearchSettings?.sitesearch_options?.agent_studio ?? false}
+											onChange={(value) => setSiteSearchOption('agent_studio', !!value)}
+										/>
+										<p>{__('Note: SiteSearch Ask AI calls askai.algolia.com directly from the browser. Your site origin must be allowlisted in the Ask AI configuration in the Algolia dashboard.', 'instantsearch-for-wp')}</p>
+									</>
+								) }
+								<h4>{__('Attribute Mapping (advanced)', 'instantsearch-for-wp')}</h4>
+								<p>{__('Which indexed record fields SiteSearch displays for each hit. Defaults match the fields this plugin indexes.', 'instantsearch-for-wp')}</p>
+								<TextControl
+									label={__('Primary Text', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_options?.attributes?.primary_text ?? 'title'}
+									onChange={(value) => setSiteSearchAttribute('primary_text', value)}
+								/>
+								<TextControl
+									label={__('Secondary Text', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_options?.attributes?.secondary_text ?? 'excerpt'}
+									onChange={(value) => setSiteSearchAttribute('secondary_text', value)}
+								/>
+								<TextControl
+									label={__('Tertiary Text', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_options?.attributes?.tertiary_text ?? 'post_type'}
+									onChange={(value) => setSiteSearchAttribute('tertiary_text', value)}
+								/>
+								<TextControl
+									label={__('URL Field', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_options?.attributes?.url ?? 'url'}
+									onChange={(value) => setSiteSearchAttribute('url', value)}
+								/>
+								<TextControl
+									label={__('Image Field', 'instantsearch-for-wp')}
+									value={useSearchSettings?.sitesearch_options?.attributes?.image ?? 'image'}
+									onChange={(value) => setSiteSearchAttribute('image', value)}
+								/>
+							</>
+						) }
+
+						{ !isSiteSearchExperience && (
+						<>
 						<h3>{__('Sidebar Settings', 'instantsearch-for-wp')}</h3>
 
 						<h4>{__('Facet Display', 'instantsearch-for-wp')}</h4>
@@ -176,6 +324,8 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 
 						{/* TODO: Finish Facet Overrides */}
 						{/* <FacetOverrides index={index} /> */}
+						</>
+						) }
 					</>
 				)
 			}

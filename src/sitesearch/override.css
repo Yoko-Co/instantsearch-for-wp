@@ -1,0 +1,9 @@
+/*
+ * Keep SiteSearch overlays above high-z-index theme/admin UI.
+ * This file is bundled as build/sitesearch-frontend.css and loaded after the
+ * vendored SiteSearch bundle styles so it wins on cascade order.
+ */
+.modal-backdrop,
+.modal-backdrop-askai {
+	z-index: 999999 !important;
+}
