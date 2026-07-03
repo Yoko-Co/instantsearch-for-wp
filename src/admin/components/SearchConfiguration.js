@@ -16,8 +16,11 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 		setAlgoliaConfig
 	} = useAdminContext();
 	
+	// NOTE: algolia settings intentionally live in the shared `algoliaConfig`
+	// context state, not in this local state. Keeping a second copy here means
+	// the stale copy wins on save (spread order in saveSettings) and silently
+	// reverts AI summaries / agent ID changes.
 	const [useSearchSettings, setUseSearchSettings] = useState({
-		algolia: settings?.algolia || {},
 		use_as_sitesearch: settings?.use_as_sitesearch || false,
 		conversational_search: settings?.conversational_search ?? true,
 		search_experience: settings?.search_experience || 'instant_search',
@@ -27,19 +30,18 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 
 	useEffect(() => {
 		setUseSearchSettings({
-			algolia: settings?.algolia || {},
 			use_as_sitesearch: settings?.use_as_sitesearch || false,
 			conversational_search: settings?.conversational_search ?? true,
 			search_experience: settings?.search_experience || 'instant_search',
 			sitesearch_options: settings?.sitesearch_options || {},
 			sitesearch_settings: settings?.sitesearch_settings || {}
 		});
-	}, [settings?.use_as_sitesearch, settings?.conversational_search, settings?.sitesearch_settings, settings?.algolia, settings?.search_experience, settings?.sitesearch_options]);
+	}, [settings?.use_as_sitesearch, settings?.conversational_search, settings?.sitesearch_settings, settings?.search_experience, settings?.sitesearch_options]);
 
 	const searchExperience = useSearchSettings?.search_experience || 'instant_search';
 	const isSiteSearchExperience = searchExperience !== 'instant_search';
 	const isAskAiExperience = ['sitesearch_askai', 'sitesearch_sidepanel'].includes(searchExperience);
-	const hasAskAiAgent = !!(useSearchSettings?.algolia?.ask_ai_agent_id);
+	const hasAskAiAgent = !!(algoliaConfig?.ask_ai_agent_id);
 
 	const setSiteSearchOption = (key, value) => setUseSearchSettings((prev) => ({
 		...prev,
@@ -68,42 +70,6 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 	return (
 		<>
 			<h3>{__('Search Configuration', 'instantsearch-for-wp')}</h3>
-			{ provider === 'algolia' && (
-				<>
-					<h4>{__('AI Summaries', 'instantsearch-for-wp')}</h4>
-					<ToggleControl
-						label={__('Enable AI summaries', 'instantsearch-for-wp')}
-						help={__('Use Algolia Ask AI to show a summary above the hits list.', 'instantsearch-for-wp')}
-						checked={!!algoliaConfig?.ai_summaries_enabled}
-						onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ai_summaries_enabled: value })}
-					/>
-					{ !!algoliaConfig?.ai_summaries_enabled && (
-						<>
-							<TextControl
-								label={__('Ask AI Agent ID', 'instantsearch-for-wp')}
-								help={__('Required when AI summaries are enabled.', 'instantsearch-for-wp')}
-								value={algoliaConfig?.ask_ai_agent_id || ''}
-								onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ask_ai_agent_id: value })}
-							/>
-							<TextControl
-								label={__('AI Disclaimer', 'instantsearch-for-wp')}
-								help={__('Optional text shown below the AI summary, for example to remind readers that AI can make mistakes and results should be verified.', 'instantsearch-for-wp')}
-								value={algoliaConfig?.ai_disclaimer || ''}
-								onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ai_disclaimer: value })}
-							/>
-							<Button
-								variant="secondary"
-								href={`https://dashboard.algolia.com/apps/${settings?.algolia?.app_id}/ask-ai`}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{__('Edit Agent Instructions', 'instantsearch-for-wp')}
-							</Button>
-						</>
-					)}
-					<hr />
-				</>
-			)}
 			<ToggleControl
 				label={__('Enable Instant Search for WP site search.', 'instantsearch-for-wp')}
 				checked={useSearchSettings?.use_as_sitesearch}
@@ -288,14 +254,8 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 						<ToggleControl
 							help={__('Free Algolia accounts are required to show the Powered by Algolia badge. You can hide it if you have a paid account.', 'instantsearch-for-wp')}
 							label={__('Hide Powered by Algolia Badge', 'instantsearch-for-wp')}
-							checked={useSearchSettings?.algolia?.hide_algolia_badge || false}
-							onChange={(value) => setUseSearchSettings((prev) => ({
-								...prev,
-								algolia: {
-									...prev.algolia,
-									hide_algolia_badge: !!value,
-								}
-							}))}
+							checked={algoliaConfig?.hide_algolia_badge || false}
+							onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, hide_algolia_badge: !!value })}
 						/>
 						<TextControl
 							label={__('Search Trigger CSS Selectors', 'instantsearch-for-wp')}
@@ -329,6 +289,62 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 
 						{ provider === 'algolia' && (
 							<>
+								<h3>{__('AI Summaries', 'instantsearch-for-wp')}</h3>
+									<ToggleControl
+										label={__('Enable AI summaries', 'instantsearch-for-wp')}
+										help={__('Use Algolia Ask AI to show a summary above the hits list.', 'instantsearch-for-wp')}
+										checked={!!algoliaConfig?.ai_summaries_enabled}
+										onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ai_summaries_enabled: value })}
+									/>
+									{ !!algoliaConfig?.ai_summaries_enabled && (
+										<>
+											<SelectControl
+												label={__('AI Answers Engine', 'instantsearch-for-wp')}
+												help={__('Ask AI generates a one-shot summary. AI Studio uses an Algolia Agent Studio agent for multi-step agentic summaries and answers.', 'instantsearch-for-wp')}
+												value={algoliaConfig?.ai_summaries_engine === 'agent_studio' ? 'agent_studio' : 'ask_ai'}
+												options={[
+													{ label: __('Ask AI (one-shot summary)', 'instantsearch-for-wp'), value: 'ask_ai' },
+													{ label: __('AI Studio (multi-step agentic answers)', 'instantsearch-for-wp'), value: 'agent_studio' },
+												]}
+												onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ai_summaries_engine: value })}
+												__next40pxDefaultSize
+											/>
+											{ algoliaConfig?.ai_summaries_engine === 'agent_studio' ? (
+												<TextControl
+													label={__('AI Studio Agent ID', 'instantsearch-for-wp')}
+													help={__('ID of a published Agent Studio agent. Required when the AI Studio engine is selected; otherwise summaries fall back to Ask AI.', 'instantsearch-for-wp')}
+													value={algoliaConfig?.ai_studio_agent_id || ''}
+													onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ai_studio_agent_id: value })}
+												/>
+											) : (
+												<TextControl
+													label={__('Ask AI Agent ID', 'instantsearch-for-wp')}
+													help={__('Required when AI summaries are enabled.', 'instantsearch-for-wp')}
+													value={algoliaConfig?.ask_ai_agent_id || ''}
+													onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ask_ai_agent_id: value })}
+												/>
+											)}
+											<TextControl
+												label={__('AI Disclaimer', 'instantsearch-for-wp')}
+												help={__('Optional text shown below the AI summary, for example to remind readers that AI can make mistakes and results should be verified.', 'instantsearch-for-wp')}
+												value={algoliaConfig?.ai_disclaimer || ''}
+												onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ai_disclaimer: value })}
+											/>
+											<Button
+												variant="secondary"
+												href={ algoliaConfig?.ai_summaries_engine === 'agent_studio'
+													? 'https://dashboard.algolia.com/generativeAi/agent-studio/agents'
+													: `https://dashboard.algolia.com/apps/${settings?.algolia?.app_id}/ask-ai` }
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												{ algoliaConfig?.ai_summaries_engine === 'agent_studio'
+													? __('Manage Agents in AI Studio', 'instantsearch-for-wp')
+													: __('Edit Agent Instructions', 'instantsearch-for-wp') }
+											</Button>
+										</>
+									)}
+									<hr />
 								<h3>{__('Conversational Chat', 'instantsearch-for-wp')}</h3>
 								<ToggleControl
 									label={__('Enable Conversational Chat Experience', 'instantsearch-for-wp')}
@@ -345,14 +361,8 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 										<TextControl
 											label={__('Conversational Search Agent ID', 'instantsearch-for-wp')}
 											help={__('Dedicated Ask AI agent ID for the built-in conversational chat experience. This is separate from the AI summaries agent ID and the SiteSearch Ask AI experience agent ID.', 'instantsearch-for-wp')}
-											value={useSearchSettings?.algolia?.conversational_search_agent_id || ''}
-											onChange={(value) => setUseSearchSettings((prev) => ({
-												...prev,
-												algolia: {
-													...prev.algolia,
-													conversational_search_agent_id: value,
-												},
-											}))}
+											value={algoliaConfig?.conversational_search_agent_id || ''}
+											onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, conversational_search_agent_id: value })}
 										/>
 										<SelectControl
 											label={__('Chat Trigger Position', 'instantsearch-for-wp')}
@@ -370,7 +380,7 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 												},
 											}))}
 										/>
-										{ !!useSearchSettings?.algolia?.conversational_search_agent_id && (
+										{ !!algoliaConfig?.conversational_search_agent_id && (
 											<Button
 												variant="secondary"
 												href={`https://dashboard.algolia.com/apps/${settings?.algolia?.app_id}/ask-ai`}

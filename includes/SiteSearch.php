@@ -75,6 +75,47 @@ class SiteSearch {
 	}
 
 	/**
+	 * Get the engine used to generate AI summaries.
+	 *
+	 * 'ask_ai' (default) uses Algolia Ask AI for a one-shot summary;
+	 * 'agent_studio' uses an Algolia AI (Agent) Studio agent for multi-step
+	 * agentic answers.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string Either 'ask_ai' or 'agent_studio'.
+	 */
+	public function get_ai_summaries_engine() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+		$engine   = isset( $algolia['ai_summaries_engine'] ) ? (string) $algolia['ai_summaries_engine'] : 'ask_ai';
+
+		if ( ! in_array( $engine, array( 'ask_ai', 'agent_studio' ), true ) ) {
+			$engine = 'ask_ai';
+		}
+
+		return (string) apply_filters( 'instantsearch_for_wp_ai_summaries_engine', $engine );
+	}
+
+	/**
+	 * Get the agent ID for the active AI summaries engine.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string
+	 */
+	public function get_ai_summaries_agent_id() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+
+		$agent_id = 'agent_studio' === $this->get_ai_summaries_engine()
+			? ( $algolia['ai_studio_agent_id'] ?? '' )
+			: ( $algolia['ask_ai_agent_id'] ?? '' );
+
+		return sanitize_text_field( (string) $agent_id );
+	}
+
+	/**
 	 * Check if AI summaries are enabled and valid for Algolia.
 	 *
 	 * @return bool
@@ -88,7 +129,7 @@ class SiteSearch {
 
 		$algolia = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
 
-		return ! empty( $algolia['ai_summaries_enabled'] ) && ! empty( $algolia['ask_ai_agent_id'] );
+		return ! empty( $algolia['ai_summaries_enabled'] ) && '' !== $this->get_ai_summaries_agent_id();
 	}
 
 	/**
@@ -245,7 +286,8 @@ class SiteSearch {
 					: false,
 				'aiSummaries'                 => array(
 					'enabled'  => $this->is_ai_summaries_enabled(),
-					'agentId'  => $settings['algolia']['ask_ai_agent_id'] ?? '',
+					'engine'   => $this->get_ai_summaries_engine(),
+					'agentId'  => $this->get_ai_summaries_agent_id(),
 					'disclaimer' => $settings['algolia']['ai_disclaimer'] ?? '',
 				),
 			)
