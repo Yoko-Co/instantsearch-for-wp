@@ -19,6 +19,7 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 	const [useSearchSettings, setUseSearchSettings] = useState({
 		algolia: settings?.algolia || {},
 		use_as_sitesearch: settings?.use_as_sitesearch || false,
+		conversational_search: settings?.conversational_search ?? true,
 		search_experience: settings?.search_experience || 'instant_search',
 		sitesearch_options: settings?.sitesearch_options || {},
 		sitesearch_settings: settings?.sitesearch_settings || {}
@@ -28,11 +29,12 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 		setUseSearchSettings({
 			algolia: settings?.algolia || {},
 			use_as_sitesearch: settings?.use_as_sitesearch || false,
+			conversational_search: settings?.conversational_search ?? true,
 			search_experience: settings?.search_experience || 'instant_search',
 			sitesearch_options: settings?.sitesearch_options || {},
 			sitesearch_settings: settings?.sitesearch_settings || {}
 		});
-	}, [settings?.use_as_sitesearch, settings?.sitesearch_settings, settings?.algolia, settings?.search_experience, settings?.sitesearch_options]);
+	}, [settings?.use_as_sitesearch, settings?.conversational_search, settings?.sitesearch_settings, settings?.algolia, settings?.search_experience, settings?.sitesearch_options]);
 
 	const searchExperience = useSearchSettings?.search_experience || 'instant_search';
 	const isSiteSearchExperience = searchExperience !== 'instant_search';
@@ -324,6 +326,64 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 
 						{/* TODO: Finish Facet Overrides */}
 						{/* <FacetOverrides index={index} /> */}
+
+						{ provider === 'algolia' && (
+							<>
+								<h3>{__('Conversational Chat', 'instantsearch-for-wp')}</h3>
+								<ToggleControl
+									label={__('Enable Conversational Chat Experience', 'instantsearch-for-wp')}
+									help={__('Turns on the built-in InstantSearch.js chat experience.', 'instantsearch-for-wp')}
+									checked={useSearchSettings?.conversational_search ?? true}
+									onChange={(value) => setUseSearchSettings((prev) => ({
+										...prev,
+										conversational_search: !!value,
+									}))}
+								/>
+								{ (useSearchSettings?.conversational_search ?? true) && (
+									<>
+										<h4>{__('AI Agent Configuration', 'instantsearch-for-wp')}</h4>
+										<TextControl
+											label={__('Conversational Search Agent ID', 'instantsearch-for-wp')}
+											help={__('Dedicated Ask AI agent ID for the built-in conversational chat experience. This is separate from the AI summaries agent ID and the SiteSearch Ask AI experience agent ID.', 'instantsearch-for-wp')}
+											value={useSearchSettings?.algolia?.conversational_search_agent_id || ''}
+											onChange={(value) => setUseSearchSettings((prev) => ({
+												...prev,
+												algolia: {
+													...prev.algolia,
+													conversational_search_agent_id: value,
+												},
+											}))}
+										/>
+										<SelectControl
+											label={__('Chat Trigger Position', 'instantsearch-for-wp')}
+											help={__('Choose where the fixed chat trigger button appears on screen.', 'instantsearch-for-wp')}
+											value={useSearchSettings?.sitesearch_settings?.chat_trigger_position || 'right'}
+											options={[
+												{ label: __('Bottom Right', 'instantsearch-for-wp'), value: 'right' },
+												{ label: __('Bottom Left', 'instantsearch-for-wp'), value: 'left' },
+											]}
+											onChange={(value) => setUseSearchSettings((prev) => ({
+												...prev,
+												sitesearch_settings: {
+													...prev.sitesearch_settings,
+													chat_trigger_position: value,
+												},
+											}))}
+										/>
+										{ !!useSearchSettings?.algolia?.conversational_search_agent_id && (
+											<Button
+												variant="secondary"
+												href={`https://dashboard.algolia.com/apps/${settings?.algolia?.app_id}/ask-ai`}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												{__('Edit Chat Agent Instructions', 'instantsearch-for-wp')}
+											</Button>
+										) }
+									</>
+								) }
+							</>
+						) }
 						</>
 						) }
 					</>

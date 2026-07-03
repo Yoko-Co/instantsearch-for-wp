@@ -50,6 +50,31 @@ class SiteSearch {
 	}
 
 	/**
+	 * Get the dedicated Ask AI agent ID for the built-in conversational
+	 * InstantSearch.js experience.
+	 *
+	 * @return string
+	 */
+	public function get_conversational_search_agent_id() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+		$agent_id = ! empty( $algolia['conversational_search_agent_id'] )
+			? sanitize_text_field( (string) $algolia['conversational_search_agent_id'] )
+			: '';
+
+		return (string) apply_filters( 'instantsearch_for_wp_conversational_search_agent_id', $agent_id );
+	}
+
+	/**
+	 * Whether the built-in conversational search experience is fully active.
+	 *
+	 * @return bool
+	 */
+	public function is_conversational_search_active() {
+		return $this->is_conversational_search_enabled() && '' !== $this->get_conversational_search_agent_id();
+	}
+
+	/**
 	 * Check if AI summaries are enabled and valid for Algolia.
 	 *
 	 * @return bool
@@ -113,7 +138,7 @@ class SiteSearch {
 			$logo_url = $image[0];
 		}
 
-		$is_conversational_search = $this->is_conversational_search_enabled();
+		$is_conversational_search = $this->is_conversational_search_active();
 		$is_ai_summaries_enabled  = $this->is_ai_summaries_enabled();
 		$show_powered_by_algolia  = $this->should_render_powered_by_algolia();
 		?>
@@ -153,6 +178,7 @@ class SiteSearch {
 			</div>
 		</div>
 		<?php if ( $is_conversational_search ) : ?>
+			<div id="algolia-chat-trigger"></div>
 			<div id="algolia-chat"></div>
 		<?php endif; ?>
 		<?php
@@ -170,7 +196,7 @@ class SiteSearch {
 			return;
 		}
 
-		$is_conversational_search = $this->is_conversational_search_enabled();
+		$is_conversational_search = $this->is_conversational_search_active();
 		// Only show the search trigger if conversational search is disabled, or if it's enabled but the user hasn't opted to hide the trigger.
 		if ( $is_conversational_search && apply_filters( 'instantsearch_for_wp_hide_search_trigger_with_conversational_search', true ) ) {
 			return;
@@ -213,8 +239,9 @@ class SiteSearch {
 				),
 				'searchTriggerQuerySelectors' => $settings['sitesearch_settings']['trigger_selectors'] ?? '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
 				'sitesearchSettings'          => $settings['sitesearch_settings'] ?? array(),
-				'conversationalSearch'        => $this->is_conversational_search_enabled()
-					? apply_filters( 'instantsearch_for_wp_conversational_search_agent_id', null )
+				'conversationalChatTriggerPosition' => $settings['sitesearch_settings']['chat_trigger_position'] ?? 'right',
+				'conversationalSearch'        => $this->is_conversational_search_active()
+					? $this->get_conversational_search_agent_id()
 					: false,
 				'aiSummaries'                 => array(
 					'enabled'  => $this->is_ai_summaries_enabled(),

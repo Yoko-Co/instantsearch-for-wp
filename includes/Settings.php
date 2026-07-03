@@ -165,11 +165,13 @@ class Settings {
 		$default_settings = array(
 			'provider'            => 'algolia',
 			'use_as_sitesearch'   => false,
+			'conversational_search' => true,
 			'search_experience'   => 'instant_search',
 			'sitesearch_options'  => self::get_default_sitesearch_options(),
 			'sitesearch_settings' => array(
 				'placeholder_text'      => __( 'Search...', 'instantsearch-for-wp' ),
 				'sidebar_position'      => 'left',
+				'chat_trigger_position' => 'right',
 				'snippet_length'        => 50,
 				'trigger_selectors' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
 				'debounce_delay'    => 0,
@@ -311,6 +313,10 @@ class Settings {
 					'type'    => array( 'boolean', 'string' ),
 					'default' => false,
 				),
+				'conversational_search' => array(
+					'type'    => 'boolean',
+					'default' => true,
+				),
 				// Which frontend search experience to render when site search is on.
 				'search_experience' => array(
 					'type'    => 'string',
@@ -357,6 +363,11 @@ class Settings {
 							'type'    => 'string',
 							'enum'    => array( 'left', 'right' ),
 							'default' => 'left',
+						),
+						'chat_trigger_position' => array(
+							'type'    => 'string',
+							'enum'    => array( 'left', 'right' ),
+							'default' => 'right',
 						),
 						'snippet_length' => array(
 							'type'    => 'integer',
@@ -415,6 +426,7 @@ class Settings {
 
 		$settings['algolia']['ai_summaries_enabled'] = ! empty( $settings['algolia']['ai_summaries_enabled'] );
 		$settings['algolia']['ask_ai_agent_id']      = sanitize_text_field( (string) $settings['algolia']['ask_ai_agent_id'] );
+		$settings['algolia']['conversational_search_agent_id'] = sanitize_text_field( (string) $settings['algolia']['conversational_search_agent_id'] );
 		$settings['algolia']['ai_disclaimer']        = sanitize_text_field( (string) $settings['algolia']['ai_disclaimer'] );
 
 		if ( $settings['algolia']['ai_summaries_enabled'] && '' === $settings['algolia']['ask_ai_agent_id'] ) {
@@ -423,6 +435,8 @@ class Settings {
 				__( 'Ask AI Agent ID is required when AI summaries are enabled.', 'instantsearch-for-wp' )
 			);
 		}
+
+		$settings['conversational_search'] = ! empty( $settings['conversational_search'] );
 
 		// Search experience.
 		if ( empty( $settings['search_experience'] ) || ! in_array( $settings['search_experience'], self::$search_experiences, true ) ) {
@@ -466,6 +480,17 @@ class Settings {
 		$options               = array_intersect_key( $options, $default_options );
 
 		$settings['sitesearch_options'] = $options;
+
+		$default_sitesearch_settings = $default['sitesearch_settings'];
+		$sitesearch_settings         = isset( $settings['sitesearch_settings'] ) && is_array( $settings['sitesearch_settings'] )
+			? wp_parse_args( $settings['sitesearch_settings'], $default_sitesearch_settings )
+			: $default_sitesearch_settings;
+
+		$sitesearch_settings['chat_trigger_position'] = in_array( $sitesearch_settings['chat_trigger_position'], array( 'left', 'right' ), true )
+			? $sitesearch_settings['chat_trigger_position']
+			: 'right';
+
+		$settings['sitesearch_settings'] = $sitesearch_settings;
 
 		return $settings;
 	}
