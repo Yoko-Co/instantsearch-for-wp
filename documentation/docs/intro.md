@@ -11,6 +11,7 @@ Welcome to the official documentation for the Yoko Core plugin.
 Use this guide for theme/plugin integration work involving custom facets and custom Algolia record fields:
 
 - [AI Agent Integrations](./ai-agent-integrations.md)
+- [SiteSearch Filters](./sitesearch-filters.md)
 
 ## How to create new documentation.
 

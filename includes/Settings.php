@@ -28,6 +28,24 @@ class Settings {
 	 *
 	 * @var array
 	 */
+	/**
+	 * Valid search experience values.
+	 *
+	 * `instant_search` is the plugin's built-in InstantSearch.js UI. The
+	 * `sitesearch_*` values map to Algolia SiteSearch experiences
+	 * (https://sitesearch.algolia.com/), rendered from vendored bundles.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @var array
+	 */
+	public static array $search_experiences = array(
+		'instant_search',
+		'sitesearch_modal',
+		'sitesearch_askai',
+		'sitesearch_sidepanel',
+	);
+
 	public static array $ignored_post_types = array(
 		'revision',
 		'nav_menu_item',
@@ -147,6 +165,8 @@ class Settings {
 		$default_settings = array(
 			'provider'            => 'algolia',
 			'use_as_sitesearch'   => false,
+			'search_experience'   => 'instant_search',
+			'sitesearch_options'  => self::get_default_sitesearch_options(),
 			'sitesearch_settings' => array(
 				'placeholder_text'      => __( 'Search...', 'instantsearch-for-wp' ),
 				'sidebar_position'      => 'left',
@@ -160,6 +180,110 @@ class Settings {
 		$default_settings = apply_filters( 'instantsearch_for_wp_default_settings', $default_settings );
 
 		return $default_settings;
+	}
+
+	/**
+	 * Get the active, validated search experience.
+	 *
+	 * Falls back to `instant_search` when the stored value is invalid, the
+	 * provider is not Algolia, or the required vendored SiteSearch bundle is
+	 * missing from the build directory.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return string One of self::$search_experiences.
+	 */
+	public static function get_search_experience() {
+		$settings   = self::get_settings();
+		$experience = $settings['search_experience'] ?? 'instant_search';
+
+		if ( ! in_array( $experience, self::$search_experiences, true ) || 'instant_search' === $experience ) {
+			return 'instant_search';
+		}
+
+		if ( 'algolia' !== ( $settings['provider'] ?? '' ) ) {
+			return 'instant_search';
+		}
+
+		// Ask AI experiences are unusable without an agent ID — treat as the
+		// plain modal at runtime.
+		if ( in_array( $experience, array( 'sitesearch_askai', 'sitesearch_sidepanel' ), true )
+			&& '' === ( $settings['algolia']['ask_ai_agent_id'] ?? '' ) ) {
+			$experience = 'sitesearch_modal';
+		}
+
+		$bundle = self::get_sitesearch_bundle( $experience );
+		if ( ! $bundle || ! file_exists( INSTANTSEARCH_FOR_WP_PATH . '/build/sitesearch/' . $bundle . '.min.js' ) ) {
+			return 'instant_search';
+		}
+
+		/**
+		 * Filters the active search experience.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param string $experience Validated experience value.
+		 */
+		return apply_filters( 'instantsearch_for_wp_search_experience', $experience );
+	}
+
+	/**
+	 * Map a `sitesearch_*` experience to its vendored bundle base name and
+	 * JS global.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param string $experience Experience value.
+	 * @param string $field      'bundle' or 'global'.
+	 *
+	 * @return string|null
+	 */
+	public static function get_sitesearch_bundle( $experience, $field = 'bundle' ) {
+		$map = array(
+			'sitesearch_modal'     => array(
+				'bundle' => 'search',
+				'global' => 'SiteSearch',
+			),
+			'sitesearch_askai'     => array(
+				'bundle' => 'search-askai',
+				'global' => 'SiteSearchAskAI',
+			),
+			'sitesearch_sidepanel' => array(
+				'bundle' => 'sidepanel-askai',
+				'global' => 'SiteSearchSidepanelAskAI',
+			),
+		);
+
+		return $map[ $experience ][ $field ] ?? null;
+	}
+
+	/**
+	 * Default options for the Algolia SiteSearch experiences.
+	 *
+	 * Attribute defaults match the record shape produced by
+	 * `AlgoliaConnector::format_post()`.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return array
+	 */
+	public static function get_default_sitesearch_options() {
+		return array(
+			'placeholder_text'            => __( 'Search…', 'instantsearch-for-wp' ),
+			'button_text'                 => __( 'Search', 'instantsearch-for-wp' ),
+			'hits_per_page'               => 10,
+			'dark_mode'                   => 'light',
+			'insights'                    => true,
+			'suggested_questions_enabled' => true,
+			'agent_studio'                => false,
+			'attributes'                  => array(
+				'primary_text'   => 'title',
+				'secondary_text' => 'excerpt',
+				'tertiary_text'  => 'post_type',
+				'url'            => 'url',
+				'image'          => 'image',
+			),
+		);
 	}
 
 	/**
@@ -186,6 +310,41 @@ class Settings {
 				'use_as_sitesearch' => array(
 					'type'    => array( 'boolean', 'string' ),
 					'default' => false,
+				),
+				// Which frontend search experience to render when site search is on.
+				'search_experience' => array(
+					'type'    => 'string',
+					'enum'    => self::$search_experiences,
+					'default' => 'instant_search',
+				),
+				// Options for the Algolia SiteSearch experiences (sitesearch_* values).
+				'sitesearch_options' => array(
+					'type'       => 'object',
+					'properties' => array(
+						'placeholder_text'            => array( 'type' => 'string' ),
+						'button_text'                 => array( 'type' => 'string' ),
+						'hits_per_page'               => array( 'type' => 'integer' ),
+						// Back-compat only: SiteSearch debounce was removed, but old
+						// saved admin payloads may still include this key.
+						'debounce_delay'              => array( 'type' => 'integer' ),
+						'dark_mode'                   => array(
+							'type' => 'string',
+							'enum' => array( 'light', 'dark', 'auto' ),
+						),
+						'insights'                    => array( 'type' => 'boolean' ),
+						'suggested_questions_enabled' => array( 'type' => 'boolean' ),
+						'agent_studio'                => array( 'type' => 'boolean' ),
+						'attributes'                  => array(
+							'type'       => 'object',
+							'properties' => array(
+								'primary_text'   => array( 'type' => 'string' ),
+								'secondary_text' => array( 'type' => 'string' ),
+								'tertiary_text'  => array( 'type' => 'string' ),
+								'url'            => array( 'type' => 'string' ),
+								'image'          => array( 'type' => 'string' ),
+							),
+						),
+					),
 				),
 				'sitesearch_settings' => array(
 					'type'       => 'object',
@@ -264,6 +423,49 @@ class Settings {
 				__( 'Ask AI Agent ID is required when AI summaries are enabled.', 'instantsearch-for-wp' )
 			);
 		}
+
+		// Search experience.
+		if ( empty( $settings['search_experience'] ) || ! in_array( $settings['search_experience'], self::$search_experiences, true ) ) {
+			$settings['search_experience'] = 'instant_search';
+		}
+
+		// SiteSearch experiences require the Algolia provider.
+		if ( 'instant_search' !== $settings['search_experience'] && 'algolia' !== ( $settings['provider'] ?? '' ) ) {
+			$settings['search_experience'] = 'instant_search';
+		}
+
+		// Ask AI experiences require an Ask AI Agent ID. Downgrade to the plain
+		// SiteSearch modal instead of returning a WP_Error: sanitize-callback
+		// errors on the core settings endpoint can corrupt the stored option.
+		if ( in_array( $settings['search_experience'], array( 'sitesearch_askai', 'sitesearch_sidepanel' ), true )
+			&& '' === ( $settings['algolia']['ask_ai_agent_id'] ?? '' ) ) {
+			$settings['search_experience'] = 'sitesearch_modal';
+		}
+
+		// SiteSearch options.
+		$default_options = self::get_default_sitesearch_options();
+		$options         = isset( $settings['sitesearch_options'] ) && is_array( $settings['sitesearch_options'] )
+			? wp_parse_args( $settings['sitesearch_options'], $default_options )
+			: $default_options;
+
+		$options['placeholder_text']            = sanitize_text_field( (string) $options['placeholder_text'] );
+		$options['button_text']                 = sanitize_text_field( (string) $options['button_text'] );
+		$options['hits_per_page']               = max( 1, min( 50, (int) $options['hits_per_page'] ) );
+		$options['dark_mode']                   = in_array( $options['dark_mode'], array( 'light', 'dark', 'auto' ), true ) ? $options['dark_mode'] : 'light';
+		$options['insights']                    = ! empty( $options['insights'] );
+		$options['suggested_questions_enabled'] = ! empty( $options['suggested_questions_enabled'] );
+		$options['agent_studio']                = ! empty( $options['agent_studio'] );
+
+		$attributes = is_array( $options['attributes'] ?? null )
+			? wp_parse_args( $options['attributes'], $default_options['attributes'] )
+			: $default_options['attributes'];
+		foreach ( $attributes as $key => $value ) {
+			$attributes[ $key ] = sanitize_text_field( (string) $value );
+		}
+		$options['attributes'] = array_intersect_key( $attributes, $default_options['attributes'] );
+		$options               = array_intersect_key( $options, $default_options );
+
+		$settings['sitesearch_options'] = $options;
 
 		return $settings;
 	}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Beaver Builder modules illustration">
+  <rect width="320" height="220" fill="#eef2ff"/>
+  <rect x="70" y="45" width="180" height="130" rx="10" fill="#ffffff" stroke="#94a3b8"/>
+  <rect x="88" y="63" width="144" height="18" rx="4" fill="#e2e8f0"/>
+  <rect x="88" y="93" width="64" height="64" rx="6" fill="#c7d2fe"/>
+  <rect x="168" y="93" width="64" height="28" rx="6" fill="#dbeafe"/>
+  <rect x="168" y="129" width="64" height="28" rx="6" fill="#e0e7ff"/>
+  <text x="160" y="200" text-anchor="middle" font-size="14" font-family="Arial, sans-serif" fill="#334155">Beaver Builder</text>
+</svg>

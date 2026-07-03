@@ -82,7 +82,15 @@ class Blocks {
 			return;
 		}
 
-		foreach ( self::$blocks as $block_name ) {
+		$blocks = self::$blocks;
+
+		// The Search Button block hosts the native Algolia SiteSearch trigger
+		// and is only registered while a SiteSearch experience is active.
+		if ( 'instant_search' !== Settings::get_search_experience() ) {
+			$blocks[] = 'search-button';
+		}
+
+		foreach ( $blocks as $block_name ) {
 			$block_path = $build_dir . '/' . $block_name;
 
 			if ( is_dir( $block_path ) ) {
