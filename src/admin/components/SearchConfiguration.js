@@ -153,10 +153,11 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 								/>
 								{ isAskAiExperience && (
 									<>
-										<ToggleControl
-											label={__('Show suggested questions', 'instantsearch-for-wp')}
-											checked={useSearchSettings?.sitesearch_options?.suggested_questions_enabled ?? true}
-											onChange={(value) => setSiteSearchOption('suggested_questions_enabled', !!value)}
+										<TextControl
+											label={__('Ask AI Agent ID', 'instantsearch-for-wp')}
+											help={__('Required when AI summaries are enabled.', 'instantsearch-for-wp')}
+											value={algoliaConfig?.ask_ai_agent_id || ''}
+											onChange={(value) => setAlgoliaConfig({ ...algoliaConfig, ask_ai_agent_id: value })}
 										/>
 										<ToggleControl
 											label={__('Use Agent Studio endpoints', 'instantsearch-for-wp')}
@@ -165,6 +166,7 @@ const SearchConfiguration = ({ index, indexCpt }) => {
 											onChange={(value) => setSiteSearchOption('agent_studio', !!value)}
 										/>
 										<p>{__('Note: SiteSearch Ask AI calls askai.algolia.com directly from the browser. Your site origin must be allowlisted in the Ask AI configuration in the Algolia dashboard.', 'instantsearch-for-wp')}</p>
+										{useSearchSettings?.sitesearch_options?.agent_studio && <p>{__('IMPORTANT: AI Studio agent suggestions must be turned off for this experience to work.', 'instantsearch-for-wp')}</p>}
 									</>
 								) }
 								<h4>{__('Attribute Mapping (advanced)', 'instantsearch-for-wp')}</h4>
