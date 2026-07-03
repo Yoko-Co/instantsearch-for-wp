@@ -426,10 +426,28 @@ class Settings {
 
 		$settings['algolia']['ai_summaries_enabled'] = ! empty( $settings['algolia']['ai_summaries_enabled'] );
 		$settings['algolia']['ask_ai_agent_id']      = sanitize_text_field( (string) $settings['algolia']['ask_ai_agent_id'] );
+		$settings['algolia']['ai_studio_agent_id']   = sanitize_text_field( (string) ( $settings['algolia']['ai_studio_agent_id'] ?? '' ) );
 		$settings['algolia']['conversational_search_agent_id'] = sanitize_text_field( (string) $settings['algolia']['conversational_search_agent_id'] );
 		$settings['algolia']['ai_disclaimer']        = sanitize_text_field( (string) $settings['algolia']['ai_disclaimer'] );
 
-		if ( $settings['algolia']['ai_summaries_enabled'] && '' === $settings['algolia']['ask_ai_agent_id'] ) {
+		// AI summaries engine: Ask AI (one-shot) or Agent Studio ("AI Studio",
+		// multi-step agentic answers). Unknown values fall back to Ask AI.
+		if ( ! in_array( $settings['algolia']['ai_summaries_engine'] ?? '', array( 'ask_ai', 'agent_studio' ), true ) ) {
+			$settings['algolia']['ai_summaries_engine'] = 'ask_ai';
+		}
+
+		// AI Studio requires its own agent ID. Downgrade to Ask AI instead of
+		// returning a WP_Error: sanitize-callback errors on the core settings
+		// endpoint can corrupt the stored option.
+		if ( 'agent_studio' === $settings['algolia']['ai_summaries_engine'] && '' === $settings['algolia']['ai_studio_agent_id'] ) {
+			$settings['algolia']['ai_summaries_engine'] = 'ask_ai';
+		}
+
+		if (
+			$settings['algolia']['ai_summaries_enabled']
+			&& 'ask_ai' === $settings['algolia']['ai_summaries_engine']
+			&& '' === $settings['algolia']['ask_ai_agent_id']
+		) {
 			return new \WP_Error(
 				'instantsearch_for_wp_missing_ask_ai_agent_id',
 				__( 'Ask AI Agent ID is required when AI summaries are enabled.', 'instantsearch-for-wp' )

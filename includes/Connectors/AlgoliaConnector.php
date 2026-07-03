@@ -76,7 +76,9 @@ class AlgoliaConnector extends AbstractConnector {
 			'admin_api_key'       => '',
 			'hide_algolia_badge'  => false,
 			'ai_summaries_enabled' => false,
+			'ai_summaries_engine'  => 'ask_ai',
 			'ask_ai_agent_id'      => '',
+			'ai_studio_agent_id'   => '',
 			'conversational_search_agent_id' => '',
 			'ai_disclaimer'        => $default_ai_disclaimer,
 		);
@@ -116,7 +118,16 @@ class AlgoliaConnector extends AbstractConnector {
 					'type'    => 'boolean',
 					'default' => false,
 				),
+				'ai_summaries_engine' => array(
+					'type'    => 'string',
+					'enum'    => array( 'ask_ai', 'agent_studio' ),
+					'default' => 'ask_ai',
+				),
 				'ask_ai_agent_id' => array(
+					'type'    => 'string',
+					'default' => '',
+				),
+				'ai_studio_agent_id' => array(
 					'type'    => 'string',
 					'default' => '',
 				),
