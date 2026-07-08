@@ -172,6 +172,7 @@ class Settings {
 				'placeholder_text'      => __( 'Search...', 'instantsearch-for-wp' ),
 				'sidebar_position'      => 'left',
 				'chat_trigger_position' => 'right',
+				'hide_floating_search_button' => true,
 				'snippet_length'        => 50,
 				'trigger_selectors' => '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
 				'debounce_delay'    => 0,
@@ -369,6 +370,10 @@ class Settings {
 							'enum'    => array( 'left', 'right' ),
 							'default' => 'right',
 						),
+						'hide_floating_search_button' => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
 						'snippet_length' => array(
 							'type'    => 'integer',
 							'default' => 50,
@@ -507,6 +512,8 @@ class Settings {
 		$sitesearch_settings['chat_trigger_position'] = in_array( $sitesearch_settings['chat_trigger_position'], array( 'left', 'right' ), true )
 			? $sitesearch_settings['chat_trigger_position']
 			: 'right';
+
+		$sitesearch_settings['hide_floating_search_button'] = ! empty( $sitesearch_settings['hide_floating_search_button'] );
 
 		$settings['sitesearch_settings'] = $sitesearch_settings;
 

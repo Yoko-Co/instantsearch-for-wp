@@ -25,6 +25,7 @@ class Blocks {
 	 */
 	private static array $blocks = [
 		'instantsearch',
+		'ask-ai',
 		'search-box',
 		'hits',
 		'hits-per-page',

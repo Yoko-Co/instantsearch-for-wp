@@ -1,0 +1,31 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "instantsearch-for-wp/ask-ai",
+	"version": "1.0.0",
+	"title": "Ask AI",
+	"description": "Render the Algolia SiteSearch Ask AI sidepanel trigger with optional inline or floating placement.",
+	"category": "instantsearch-for-wp",
+	"icon": "format-chat",
+	"keywords": [ "ask ai", "algolia", "sitesearch", "assistant", "chat" ],
+	"textdomain": "instantsearch-for-wp",
+	"attributes": {
+		"metadata": { "type": "object" },
+		"buttonText": { "type": "string", "default": "" },
+		"themeMode": { "type": "string", "default": "light" },
+		"placement": { "type": "string", "default": "floating-right" },
+		"useGlobalAgentId": { "type": "boolean", "default": true },
+		"customAgentId": { "type": "string", "default": "" },
+		"useGlobalApiKey": { "type": "boolean", "default": true },
+		"customApiKey": { "type": "string", "default": "" }
+	},
+	"supports": {
+		"html": false,
+		"spacing": { "margin": true },
+		"align": [ "left", "center", "right", "wide", "full" ]
+	},
+	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js",
+	"style": "file:./style.scss",
+	"render": "file:./render.php"
+}
