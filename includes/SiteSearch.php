@@ -237,6 +237,12 @@ class SiteSearch {
 			return;
 		}
 
+		$settings = Settings::get_settings();
+		$hide_floating_search_button = ! empty( $settings['sitesearch_settings']['hide_floating_search_button'] );
+		if ( $hide_floating_search_button ) {
+			return;
+		}
+
 		$is_conversational_search = $this->is_conversational_search_active();
 		// Only show the search trigger if conversational search is disabled, or if it's enabled but the user hasn't opted to hide the trigger.
 		if ( $is_conversational_search && apply_filters( 'instantsearch_for_wp_hide_search_trigger_with_conversational_search', true ) ) {
