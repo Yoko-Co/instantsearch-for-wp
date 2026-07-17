@@ -23,7 +23,8 @@
  * token streams in the bubble is no longer :empty, so this vanishes on its
  * own with no JS and no dependency on widget internals.
  */
-.ss-qa-answer-content .ss-qa-markdown:empty::after {
+.ss-qa-answer-content .ss-qa-markdown:empty::after,
+.ss-qa-answer-content .ss-qa-markdown .ss-markdown-content:empty::after {
 	content: "Thinking…";
 	display: inline-block;
 	opacity: 0.65;

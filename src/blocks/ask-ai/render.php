@@ -82,6 +82,19 @@ if ( file_exists( $bundle_path . '.min.css' ) ) {
 	);
 }
 
+$sitesearch_overrides_path = INSTANTSEARCH_FOR_WP_PATH . '/build/sitesearch-frontend.css';
+if ( file_exists( $sitesearch_overrides_path ) ) {
+	$asset_file = INSTANTSEARCH_FOR_WP_PATH . '/build/sitesearch-frontend.asset.php';
+	$asset      = file_exists( $asset_file ) ? require $asset_file : array();
+
+	wp_enqueue_style(
+		'instantsearch-for-wp-sitesearch-overrides',
+		INSTANTSEARCH_FOR_WP_URL . 'build/sitesearch-frontend.css',
+		array( 'instantsearch-for-wp-sitesearch-sidepanel-lib' ),
+		$asset['version'] ?? INSTANTSEARCH_FOR_WP_VERSION
+	);
+}
+
 $config = wp_json_encode(
 	array(
 		'applicationId'             => $app_id,
