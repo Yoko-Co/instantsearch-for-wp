@@ -328,6 +328,7 @@ class AlgoliaConnector extends AbstractConnector {
 			'indexed_at'     => $now,
 			'indexed_at_ts'  => strtotime( $now ),
 			'url'            => get_permalink( $post->ID ),
+			'weight'         => intval( apply_filters( 'instantsearch_record_weight', 0, $post, $index ) ),
 		);
 
 		if ( 'attachment' === $post->post_type && 'application/pdf' === get_post_mime_type( $post->ID ) ) {
@@ -612,6 +613,22 @@ class AlgoliaConnector extends AbstractConnector {
 			// Set searchable attributes as highligthtedAttributes to ensure they are highlighted in results.
 			'attributesToHighlight'  => $searchable_attributes,
 			'attributesToSnippet'    => apply_filters( 'instantsearch_attributes_to_snippet', array( 'content', 'excerpt' ), $index['name'] ?? 'search' ),
+			'ranking'                => apply_filters( 
+				'instantsearch_ranking', 
+				array(
+					'desc(weight)',
+					'typo',
+					'geo',
+					'words',
+					'filters',
+					'attribute',
+					'proximity',
+					'exact',
+					'desc(date_ts)',
+				),
+				$index['name'] ?? 'search'
+			),
+			'customRanking'          => apply_filters( 'instantsearch_custom_ranking', array(), $index['name'] ?? 'search' ),
 			'removeWordsIfNoResults' => apply_filters( 'instantsearch_remove_words_if_no_results', 'allOptional', $index['name'] ?? 'search' )
 		);
 
