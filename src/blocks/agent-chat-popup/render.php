@@ -30,12 +30,19 @@ if ( ! $isfwp_agent_json ) {
 	return '';
 }
 
-$isfwp_agent_wrapper = get_block_wrapper_attributes(
-	array(
-		'class'                 => 'isfwp-agent-popup-block isfwp-agent-popup-block--' . sanitize_html_class( $isfwp_agent_position ),
-		'data-isfwp-agent-chat' => 'popup',
-	)
+$isfwp_agent_wrapper_args = array(
+	'class'                 => 'isfwp-agent-popup-block isfwp-agent-popup-block--' . sanitize_html_class( $isfwp_agent_position ),
+	'data-isfwp-agent-chat' => 'popup',
 );
+
+// Styles-tab choices ride along as CSS custom properties; the fixed-position
+// panel and trigger still inherit them because they stay DOM descendants.
+$isfwp_agent_style_vars = AgentChat::get_style_vars( $attributes );
+if ( '' !== $isfwp_agent_style_vars ) {
+	$isfwp_agent_wrapper_args['style'] = $isfwp_agent_style_vars;
+}
+
+$isfwp_agent_wrapper = get_block_wrapper_attributes( $isfwp_agent_wrapper_args );
 ?>
 <div <?php echo $isfwp_agent_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by get_block_wrapper_attributes(). ?>
 >

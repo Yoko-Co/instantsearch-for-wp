@@ -19,11 +19,20 @@
 		"useGlobalAgentId": { "type": "boolean", "default": true },
 		"customAgentId": { "type": "string", "default": "" },
 		"useGlobalApiKey": { "type": "boolean", "default": true },
-		"customApiKey": { "type": "string", "default": "" }
+		"customApiKey": { "type": "string", "default": "" },
+		"backgroundColor": { "type": "string", "default": "" },
+		"textColor": { "type": "string", "default": "" },
+		"accentColor": { "type": "string", "default": "" },
+		"accentTextColor": { "type": "string", "default": "" },
+		"borderColor": { "type": "string", "default": "" },
+		"borderRadius": { "type": "number" },
+		"chatPadding": { "type": "number" },
+		"sendIcon": { "type": "string", "default": "paper-plane" }
 	},
 	"supports": {
 		"html": false,
 		"spacing": { "margin": true },
+		"typography": { "fontSize": true, "lineHeight": true },
 		"align": [ "wide", "full" ]
 	},
 	"editorScript": "file:./index.js",

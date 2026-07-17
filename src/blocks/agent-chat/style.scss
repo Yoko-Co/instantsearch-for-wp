@@ -3,9 +3,11 @@
 @import '../../agent-chat/chat';
 
 .wp-block-instantsearch-for-wp-agent-chat {
-	border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 15%, transparent);
-	border-radius: 0.75rem;
-	background: var(--wp--preset--color--base, #fff);
+	@include isfwp-agent-chat-vars;
+
+	border: 1px solid var(--isfwp-chat--border);
+	border-radius: var(--isfwp-agent-chat-radius, 0.75rem);
+	background: var(--isfwp-chat--bg);
 	overflow: hidden;
 
 	.isfwp-agent-chat {

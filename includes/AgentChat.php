@@ -96,6 +96,11 @@ class AgentChat {
 
 		$mode = ( $attributes['mode'] ?? '' ) === 'single' ? 'single' : 'conversation';
 
+		$send_icon = (string) ( $attributes['sendIcon'] ?? '' );
+		if ( ! in_array( $send_icon, array( 'paper-plane', 'arrow-up', 'chat-bubble', 'sparkle' ), true ) ) {
+			$send_icon = 'paper-plane';
+		}
+
 		$config = array(
 			'appId'                    => $app_id,
 			'apiKey'                   => $api_key,
@@ -105,6 +110,7 @@ class AgentChat {
 			'welcomeTitle'             => sanitize_text_field( (string) ( $attributes['welcomeTitle'] ?? '' ) ),
 			'welcomeMessage'           => sanitize_text_field( (string) ( $attributes['welcomeMessage'] ?? '' ) ),
 			'showRecommendedQuestions' => ! isset( $attributes['showRecommendedQuestions'] ) || (bool) $attributes['showRecommendedQuestions'],
+			'sendIcon'                 => $send_icon,
 			'disclaimer'               => sanitize_text_field( (string) ( $algolia['ai_disclaimer'] ?? '' ) ),
 		);
 
@@ -147,6 +153,51 @@ class AgentChat {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Build the inline `--isfwp-agent-chat-*` custom-property string for the
+	 * block wrapper from the Styles-tab attributes.
+	 *
+	 * Anything left unset is simply omitted, so the frontend CSS falls back
+	 * to the active theme's design tokens (see src/agent-chat/_chat.scss).
+	 *
+	 * @param array $attributes Block attributes.
+	 * @return string Semicolon-separated declarations ('' when nothing set).
+	 */
+	public static function get_style_vars( array $attributes ): string {
+		$vars = array();
+
+		$color_map = array(
+			'backgroundColor' => '--isfwp-agent-chat-bg',
+			'textColor'       => '--isfwp-agent-chat-text',
+			'accentColor'     => '--isfwp-agent-chat-accent',
+			'accentTextColor' => '--isfwp-agent-chat-accent-contrast',
+			'borderColor'     => '--isfwp-agent-chat-border-color',
+		);
+
+		foreach ( $color_map as $attribute => $property ) {
+			$value = trim( (string) ( $attributes[ $attribute ] ?? '' ) );
+
+			// Editor colors arrive as hex/rgb()/hsl()/var() strings; anything
+			// outside that character set is dropped rather than printed.
+			if ( '' !== $value && preg_match( '/^[a-zA-Z0-9#(),.%\s\-_]+$/', $value ) ) {
+				$vars[] = $property . ':' . $value;
+			}
+		}
+
+		$size_map = array(
+			'borderRadius' => '--isfwp-agent-chat-radius',
+			'chatPadding'  => '--isfwp-agent-chat-padding',
+		);
+
+		foreach ( $size_map as $attribute => $property ) {
+			if ( isset( $attributes[ $attribute ] ) && is_numeric( $attributes[ $attribute ] ) ) {
+				$vars[] = $property . ':' . max( 0, (int) $attributes[ $attribute ] ) . 'px';
+			}
+		}
+
+		return implode( ';', $vars );
 	}
 
 	/**

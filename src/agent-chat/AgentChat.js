@@ -264,14 +264,55 @@ const RecommendedQuestions = ( { questions, onAsk, isFollowUp = false } ) => {
 };
 
 /**
+ * Send-button icon variants selectable from the block's Styles tab.
+ */
+const SEND_ICON_PATHS = {
+	'paper-plane': (
+		<>
+			<path d="M22 2 11 13" />
+			<path d="M22 2 15 22 11 13 2 9z" />
+		</>
+	),
+	'arrow-up': (
+		<>
+			<line x1="12" y1="19" x2="12" y2="5" />
+			<polyline points="5 12 12 5 19 12" />
+		</>
+	),
+	'chat-bubble': (
+		<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+	),
+	sparkle: (
+		<path d="M12 3l1.9 3.9L18 8l-3 2.9.7 4.1L12 13l-3.7 2 .7-4.1L6 8l4.1-1.1L12 3z" />
+	),
+};
+
+const SendIcon = ( { icon } ) => (
+	<svg
+		viewBox="0 0 24 24"
+		width="18"
+		height="18"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth="2"
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		aria-hidden="true"
+	>
+		{ SEND_ICON_PATHS[ icon ] || SEND_ICON_PATHS[ 'paper-plane' ] }
+	</svg>
+);
+
+/**
  * Composer: textarea + send/stop. A controlled form (rather than
  * ComposerPrimitive) so single mode can reset the thread before appending.
  *
  * @param {Object}   props
  * @param {string}   props.placeholder Input placeholder.
+ * @param {string}   props.sendIcon    Send icon variant.
  * @param {Function} props.onSend      Called with the typed question.
  */
-const Composer = ( { placeholder, onSend } ) => {
+const Composer = ( { placeholder, sendIcon, onSend } ) => {
 	const runtime = useAssistantRuntime();
 	const isRunning = useThread( ( t ) => t.isRunning );
 	const [ value, setValue ] = useState( '' );
@@ -343,20 +384,7 @@ const Composer = ( { placeholder, onSend } ) => {
 					aria-label={ __( 'Send question', 'instantsearch-for-wp' ) }
 					disabled={ ! value.trim() }
 				>
-					<svg
-						viewBox="0 0 24 24"
-						width="18"
-						height="18"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						aria-hidden="true"
-					>
-						<path d="M22 2 11 13" />
-						<path d="M22 2 15 22 11 13 2 9z" />
-					</svg>
+					<SendIcon icon={ sendIcon } />
 				</button>
 			) }
 		</form>
@@ -422,6 +450,7 @@ const ChatThread = ( { config, questions } ) => {
 					config.placeholder ||
 					__( 'Ask a question…', 'instantsearch-for-wp' )
 				}
+				sendIcon={ config.sendIcon }
 				onSend={ send }
 			/>
 
