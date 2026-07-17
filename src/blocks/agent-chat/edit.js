@@ -8,6 +8,7 @@ import { Notice } from '@wordpress/components';
 import {
 	ChatSettingsPanel,
 	AgentOverridesPanels,
+	ChatStylePanels,
 } from '../../agent-chat/inspector';
 
 const Edit = ( { attributes, setAttributes } ) => {
@@ -16,6 +17,21 @@ const Edit = ( { attributes, setAttributes } ) => {
 	const blockProps = useBlockProps( {
 		className: 'isfwp-agent-chat-editor',
 	} );
+
+	// Mirror the Styles-tab choices in the preview card.
+	const previewStyle = {
+		background: attributes.backgroundColor || undefined,
+		color: attributes.textColor || undefined,
+		borderColor: attributes.borderColor || undefined,
+		borderRadius:
+			typeof attributes.borderRadius === 'number'
+				? `${ attributes.borderRadius }px`
+				: undefined,
+		padding:
+			typeof attributes.chatPadding === 'number'
+				? `${ attributes.chatPadding }px`
+				: undefined,
+	};
 
 	return (
 		<>
@@ -30,9 +46,15 @@ const Edit = ( { attributes, setAttributes } ) => {
 				/>
 			</InspectorControls>
 
+			<ChatStylePanels
+				attributes={ attributes }
+				setAttributes={ setAttributes }
+			/>
+
 			<div { ...blockProps }>
 				<div
 					className="isfwp-agent-chat-editor__preview"
+					style={ previewStyle }
 					aria-hidden="true"
 				>
 					<p className="isfwp-agent-chat-editor__title">

@@ -1,16 +1,47 @@
 /* Shared styles for the Agent Chat surfaces (inline block + popup block).
-   Every visual decision defers to the theme's design tokens with neutral
-   fallbacks for classic themes.
+   Two-layer theming:
+   - Base layer: `--isfwp-agent-chat-*` custom properties, set inline on the
+     block wrapper by render.php when the editor's Styles tab configures them.
+   - Fallback layer: the active theme's design tokens (--wp--preset--*), so an
+     unconfigured chat inherits a block theme's palette natively.
    DEBUG: inspect :root in the browser to see which --wp--preset--* vars the
    active theme actually defines. */
 
+/* Resolves the effective chat colors once, so every rule below can reference
+   a single var. Applied to each styled root (block wrappers + chat root) —
+   custom properties inherit, so the wrapper's inline overrides always win. */
+@mixin isfwp-agent-chat-vars {
+	--isfwp-chat--text: var(
+		--isfwp-agent-chat-text,
+		var(--wp--preset--color--contrast, #1a1a1a)
+	);
+	--isfwp-chat--bg: var(
+		--isfwp-agent-chat-bg,
+		var(--wp--preset--color--base, #fff)
+	);
+	--isfwp-chat--accent: var(
+		--isfwp-agent-chat-accent,
+		var(--wp--preset--color--primary, #1a1a1a)
+	);
+	--isfwp-chat--accent-contrast: var(
+		--isfwp-agent-chat-accent-contrast,
+		var(--wp--preset--color--base, #fff)
+	);
+	--isfwp-chat--border: var(
+		--isfwp-agent-chat-border-color,
+		color-mix(in srgb, var(--isfwp-chat--text) 15%, transparent)
+	);
+}
+
 .isfwp-agent-chat {
+	@include isfwp-agent-chat-vars;
+
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
 	height: 100%;
 	font-size: var(--wp--preset--font-size--small, 0.9375rem);
-	color: var(--wp--preset--color--contrast, #1a1a1a);
+	color: var(--isfwp-chat--text);
 
 	&__thread {
 		display: flex;
@@ -26,7 +57,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
-		padding: 1rem;
+		padding: var(--isfwp-agent-chat-padding, 1rem);
 	}
 
 	&__welcome {
@@ -66,14 +97,14 @@
 		overflow-wrap: anywhere;
 
 		&--user {
-			background: var(--wp--preset--color--primary, #1a1a1a);
-			color: var(--wp--preset--color--base, #fff);
+			background: var(--isfwp-chat--accent);
+			color: var(--isfwp-chat--accent-contrast);
 			border-bottom-right-radius: 0.25rem;
 			white-space: pre-wrap;
 		}
 
 		&--assistant {
-			background: color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 6%, transparent);
+			background: color-mix(in srgb, var(--isfwp-chat--text) 6%, transparent);
 			border-bottom-left-radius: 0.25rem;
 			width: 100%;
 			max-width: 100%;
@@ -128,7 +159,7 @@
 			overflow-x: auto;
 			padding: 0.625rem;
 			border-radius: 0.375rem;
-			background: color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 8%, transparent);
+			background: color-mix(in srgb, var(--isfwp-chat--text) 8%, transparent);
 		}
 
 		table {
@@ -139,7 +170,7 @@
 
 		th,
 		td {
-			border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 20%, transparent);
+			border: 1px solid color-mix(in srgb, var(--isfwp-chat--text) 20%, transparent);
 			padding: 0.375rem 0.5rem;
 			text-align: left;
 		}
@@ -159,7 +190,7 @@
 		&--follow-up {
 			flex-direction: column;
 			align-items: flex-start;
-			border-top: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 10%, transparent);
+			border-top: 1px solid color-mix(in srgb, var(--isfwp-chat--text) 10%, transparent);
 			padding-top: 0.75rem;
 		}
 	}
@@ -175,9 +206,9 @@
 
 	&__question {
 		appearance: none;
-		border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 20%, transparent);
+		border: 1px solid color-mix(in srgb, var(--isfwp-chat--text) 20%, transparent);
 		border-radius: 999px;
-		background: var(--wp--preset--color--base, #fff);
+		background: var(--isfwp-chat--bg);
 		color: inherit;
 		font: inherit;
 		font-size: 0.875em;
@@ -188,7 +219,7 @@
 
 		&:hover:not(:disabled),
 		&:focus-visible {
-			background: color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 6%, transparent);
+			background: color-mix(in srgb, var(--isfwp-chat--text) 6%, transparent);
 		}
 
 		&:disabled {
@@ -201,16 +232,16 @@
 		display: flex;
 		align-items: flex-end;
 		gap: 0.5rem;
-		border-top: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 12%, transparent);
-		padding: 0.75rem 1rem;
+		border-top: 1px solid color-mix(in srgb, var(--isfwp-chat--text) 12%, transparent);
+		padding: 0.75rem var(--isfwp-agent-chat-padding, 1rem);
 	}
 
 	&__input {
 		flex: 1 1 auto;
 		resize: none;
-		border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 20%, transparent);
+		border: 1px solid color-mix(in srgb, var(--isfwp-chat--text) 20%, transparent);
 		border-radius: 0.625rem;
-		background: var(--wp--preset--color--base, #fff);
+		background: var(--isfwp-chat--bg);
 		color: inherit;
 		font: inherit;
 		line-height: 1.4;
@@ -219,7 +250,7 @@
 		max-height: 8rem;
 
 		&:focus {
-			outline: 2px solid var(--wp--preset--color--primary, #1a1a1a);
+			outline: 2px solid var(--isfwp-chat--accent);
 			outline-offset: 1px;
 		}
 	}
@@ -234,8 +265,8 @@
 		height: 2.5rem;
 		border: none;
 		border-radius: 0.625rem;
-		background: var(--wp--preset--color--primary, #1a1a1a);
-		color: var(--wp--preset--color--base, #fff);
+		background: var(--isfwp-chat--accent);
+		color: var(--isfwp-chat--accent-contrast);
 		cursor: pointer;
 
 		&:disabled {
@@ -244,13 +275,13 @@
 		}
 
 		&--stop {
-			background: color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 70%, transparent);
+			background: color-mix(in srgb, var(--isfwp-chat--text) 70%, transparent);
 		}
 	}
 
 	&__disclaimer {
 		margin: 0;
-		padding: 0 1rem 0.75rem;
+		padding: 0 var(--isfwp-agent-chat-padding, 1rem) 0.75rem;
 		font-size: 0.75rem;
 		opacity: 0.65;
 	}

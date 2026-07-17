@@ -3,11 +3,17 @@
 @import '../../agent-chat/chat';
 
 .wp-block-instantsearch-for-wp-agent-chat-popup {
-	/* The wrapper itself takes no space — everything inside is fixed. */
+	/* The wrapper itself takes no space — everything inside is fixed. The
+	   Styles-tab custom properties land here and inherit into the fixed
+	   trigger/panel below. */
+	@include isfwp-agent-chat-vars;
+
 	position: static;
 }
 
 .isfwp-agent-popup {
+	@include isfwp-agent-chat-vars;
+
 	&__trigger {
 		position: fixed;
 		bottom: 1.25rem;
@@ -20,8 +26,8 @@
 		border: none;
 		border-radius: 999px;
 		padding: 0.75rem 1.25rem;
-		background: var(--wp--preset--color--primary, #1a1a1a);
-		color: var(--wp--preset--color--base, #fff);
+		background: var(--isfwp-chat--accent);
+		color: var(--isfwp-chat--accent-contrast);
 		font: inherit;
 		font-weight: 600;
 		cursor: pointer;
@@ -37,9 +43,10 @@
 		height: min(34rem, calc(100vh - 7rem));
 		display: flex;
 		flex-direction: column;
-		border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 15%, transparent);
-		border-radius: 1rem;
-		background: var(--wp--preset--color--base, #fff);
+		border: 1px solid var(--isfwp-chat--border);
+		border-radius: var(--isfwp-agent-chat-radius, 1rem);
+		background: var(--isfwp-chat--bg);
+		color: var(--isfwp-chat--text);
 		box-shadow: 0 12px 48px rgba(0, 0, 0, 0.22);
 		overflow: hidden;
 
@@ -67,8 +74,8 @@
 		justify-content: space-between;
 		gap: 0.5rem;
 		padding: 0.75rem 1rem;
-		border-bottom: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 12%, transparent);
-		background: color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 4%, transparent);
+		border-bottom: 1px solid color-mix(in srgb, var(--isfwp-chat--text) 12%, transparent);
+		background: color-mix(in srgb, var(--isfwp-chat--text) 4%, transparent);
 	}
 
 	&__title {
@@ -88,7 +95,7 @@
 
 		&:hover,
 		&:focus-visible {
-			background: color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 10%, transparent);
+			background: color-mix(in srgb, var(--isfwp-chat--text) 10%, transparent);
 		}
 	}
 }

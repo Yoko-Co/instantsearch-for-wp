@@ -13,6 +13,7 @@ import {
 import {
 	ChatSettingsPanel,
 	AgentOverridesPanels,
+	ChatStylePanels,
 } from '../../agent-chat/inspector';
 
 const Edit = ( { attributes, setAttributes } ) => {
@@ -103,9 +104,18 @@ const Edit = ( { attributes, setAttributes } ) => {
 				/>
 			</InspectorControls>
 
+			<ChatStylePanels
+				attributes={ attributes }
+				setAttributes={ setAttributes }
+			/>
+
 			<div { ...blockProps }>
 				<div
 					className="isfwp-agent-popup-editor__button"
+					style={ {
+						background: attributes.accentColor || undefined,
+						color: attributes.accentTextColor || undefined,
+					} }
 					aria-hidden="true"
 				>
 					<svg

@@ -24,12 +24,19 @@ if ( ! $isfwp_agent_json ) {
 	return '';
 }
 
-$isfwp_agent_wrapper = get_block_wrapper_attributes(
-	array(
-		'class'                  => 'isfwp-agent-chat-block isfwp-agent-chat-block--' . sanitize_html_class( $isfwp_agent_config['mode'] ),
-		'data-isfwp-agent-chat'  => 'inline',
-	)
+$isfwp_agent_wrapper_args = array(
+	'class'                 => 'isfwp-agent-chat-block isfwp-agent-chat-block--' . sanitize_html_class( $isfwp_agent_config['mode'] ),
+	'data-isfwp-agent-chat' => 'inline',
 );
+
+// Styles-tab choices ride along as CSS custom properties; unset values fall
+// back to the theme's design tokens in the stylesheet.
+$isfwp_agent_style_vars = AgentChat::get_style_vars( $attributes );
+if ( '' !== $isfwp_agent_style_vars ) {
+	$isfwp_agent_wrapper_args['style'] = $isfwp_agent_style_vars;
+}
+
+$isfwp_agent_wrapper = get_block_wrapper_attributes( $isfwp_agent_wrapper_args );
 ?>
 <div <?php echo $isfwp_agent_wrapper; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped by get_block_wrapper_attributes(). ?>
 >
