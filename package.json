@@ -46,6 +46,7 @@
   ],
   "dependencies": {
     "@algolia/sitesearch": "1.0.14",
+    "@assistant-ui/react": "^0.14.27",
     "@babel/runtime": "^7.27.6",
     "@wordpress/api-fetch": "^7.31.0",
     "@wordpress/components": "^30.4.0",

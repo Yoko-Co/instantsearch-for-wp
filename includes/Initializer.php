@@ -40,6 +40,7 @@ class Initializer {
 
 		new Settings();
 		new Blocks();
+		new AgentChat();
 
 		// Initialize admin interface.
 		if ( is_admin() ) {

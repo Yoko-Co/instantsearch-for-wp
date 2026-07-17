@@ -25,6 +25,8 @@ class Blocks {
 	 */
 	private static array $blocks = [
 		'instantsearch',
+		'agent-chat',
+		'agent-chat-popup',
 		'ask-ai',
 		'search-box',
 		'hits',
