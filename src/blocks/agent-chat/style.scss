@@ -1,0 +1,65 @@
+/* Frontend styles for the inline AI Agent Chat block. */
+
+@import '../../agent-chat/chat';
+
+.wp-block-instantsearch-for-wp-agent-chat {
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #1a1a1a) 15%, transparent);
+	border-radius: 0.75rem;
+	background: var(--wp--preset--color--base, #fff);
+	overflow: hidden;
+
+	.isfwp-agent-chat {
+		/* Conversations scroll inside the block instead of growing the page. */
+		max-height: min(70vh, 40rem);
+	}
+
+	.isfwp-agent-chat--single {
+		/* Single mode holds one Q&A — let it size to content. */
+		max-height: none;
+
+		.isfwp-agent-chat__viewport {
+			overflow-y: visible;
+		}
+	}
+}
+
+/* Editor preview (static mock — the live chat only runs on the frontend). */
+.isfwp-agent-chat-editor {
+	&__preview {
+		border: 1px solid #d0d0d0;
+		border-radius: 0.75rem;
+		padding: 1rem;
+		background: #fff;
+		margin-bottom: 0.75rem;
+	}
+
+	&__title {
+		margin: 0 0 0.375rem;
+		font-weight: 600;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	&__pill {
+		display: inline-block;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background: #eef2ff;
+		color: #3730a3;
+		font-size: 11px;
+		font-weight: 600;
+	}
+
+	&__message {
+		margin: 0 0 0.75rem;
+		opacity: 0.75;
+	}
+
+	&__input {
+		border: 1px solid #d0d0d0;
+		border-radius: 0.625rem;
+		padding: 0.5rem 0.75rem;
+		color: #757575;
+	}
+}
