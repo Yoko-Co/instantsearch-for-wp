@@ -1,0 +1,46 @@
+.wp-block-instantsearch-for-wp-ask-ai {
+	.ss-qa-answer-content .ss-qa-markdown:empty::after,
+	.ss-qa-answer-content .ss-qa-markdown .ss-markdown-content:empty::after {
+		content: 'Thinking...';
+		display: inline-block;
+		opacity: 0.65;
+		animation: isfwp-askai-thinking 1.2s ease-in-out infinite;
+	}
+
+	&.isfwp-ask-ai--floating-left {
+		.ss-sidepanel-trigger {
+			left: 1.25rem;
+			right: auto;
+		}
+
+		.ss-sidepanel-panel {
+			left: 1rem;
+			right: auto;
+		}
+	}
+}
+
+@keyframes isfwp-askai-thinking {
+	0%,
+	100% {
+		opacity: 0.35;
+	}
+
+	50% {
+		opacity: 0.85;
+	}
+}
+
+@media (max-width: 782px) {
+	.wp-block-instantsearch-for-wp-ask-ai.isfwp-ask-ai--floating-left {
+		.ss-sidepanel-trigger {
+			left: 0.75rem;
+		}
+
+		.ss-sidepanel-panel {
+			left: 0.75rem;
+			right: 0.75rem;
+			width: auto;
+		}
+	}
+}

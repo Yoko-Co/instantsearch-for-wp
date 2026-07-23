@@ -1,0 +1,23 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "instantsearch-for-wp/search-button",
+	"version": "1.0.0",
+	"title": "InstantSearch Search Button",
+	"description": "The native Algolia SiteSearch button — opens the search modal and shows the ⌘K keyboard shortcut. Available when a SiteSearch experience is active.",
+	"category": "instantsearch-for-wp",
+	"icon": "search",
+	"keywords": [ "search", "button", "sitesearch", "modal", "command", "shortcut" ],
+	"textdomain": "instantsearch-for-wp",
+	"attributes": {
+		"metadata": { "type": "object" },
+		"buttonText": { "type": "string", "default": "" }
+	},
+	"supports": {
+		"html": false,
+		"spacing": { "margin": true },
+		"align": [ "left", "center", "right" ]
+	},
+	"editorScript": "file:./index.js",
+	"render": "file:./render.php"
+}

@@ -1,5 +1,5 @@
 import { __ } from "@wordpress/i18n";
-import { TextControl, ToggleControl } from "@wordpress/components";
+import { SelectControl, TextControl, ToggleControl } from "@wordpress/components";
 
 import { useAdminContext } from "./AdminContext";
 
@@ -40,13 +40,36 @@ const AlgoliaConfig = () => {
 			onChange={ ( value ) => setAlgoliaConfig( { ...algoliaConfig, ai_summaries_enabled: value } ) }
 		/>
 		{ !! algoliaConfig?.ai_summaries_enabled && (
-			<TextControl
-				__next40pxDefaultSize
-				label={ __('Ask AI Agent ID', 'instantsearch-for-wp') }
-				help={ __('Required when AI summaries are enabled.', 'instantsearch-for-wp') }
-				onChange={ ( value ) => setAlgoliaConfig( { ...algoliaConfig, ask_ai_agent_id: value } ) }
-				value={algoliaConfig?.ask_ai_agent_id || '' }
-			/>
+			<>
+				<SelectControl
+					__next40pxDefaultSize
+					label={ __('AI Answers Engine', 'instantsearch-for-wp') }
+					help={ __('Ask AI generates a one-shot summary. AI Studio uses an Algolia Agent Studio agent for multi-step agentic summaries and answers.', 'instantsearch-for-wp') }
+					value={ algoliaConfig?.ai_summaries_engine === 'agent_studio' ? 'agent_studio' : 'ask_ai' }
+					options={ [
+						{ label: __('Ask AI (one-shot summary)', 'instantsearch-for-wp'), value: 'ask_ai' },
+						{ label: __('AI Studio (multi-step agentic answers)', 'instantsearch-for-wp'), value: 'agent_studio' },
+					] }
+					onChange={ ( value ) => setAlgoliaConfig( { ...algoliaConfig, ai_summaries_engine: value } ) }
+				/>
+				{ algoliaConfig?.ai_summaries_engine === 'agent_studio' ? (
+					<TextControl
+						__next40pxDefaultSize
+						label={ __('AI Studio Agent ID', 'instantsearch-for-wp') }
+						help={ __('ID of a published Agent Studio agent. Required when the AI Studio engine is selected; otherwise summaries fall back to Ask AI.', 'instantsearch-for-wp') }
+						onChange={ ( value ) => setAlgoliaConfig( { ...algoliaConfig, ai_studio_agent_id: value } ) }
+						value={algoliaConfig?.ai_studio_agent_id || '' }
+					/>
+				) : (
+					<TextControl
+						__next40pxDefaultSize
+						label={ __('Ask AI Agent ID', 'instantsearch-for-wp') }
+						help={ __('Required when AI summaries are enabled.', 'instantsearch-for-wp') }
+						onChange={ ( value ) => setAlgoliaConfig( { ...algoliaConfig, ask_ai_agent_id: value } ) }
+						value={algoliaConfig?.ask_ai_agent_id || '' }
+					/>
+				) }
+			</>
 		) }
 	</div>;
 }

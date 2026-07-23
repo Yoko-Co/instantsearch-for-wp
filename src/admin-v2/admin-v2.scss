@@ -1,0 +1,169 @@
+/* InstantSearch for WP — Dashboard v2 */
+
+.instantsearch-admin-v2 {
+	margin-top: 16px;
+
+	.instantsearch-admin__notices:not(:empty) {
+		margin-block-end: 16px;
+	}
+
+	&__layout {
+		display: flex;
+		gap: 20px;
+		align-items: flex-start;
+	}
+
+	&__sidebar {
+		flex: 0 0 240px;
+		background: #fff;
+		border: 1px solid #dcdcde;
+		border-radius: 4px;
+		padding: 12px 8px;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		position: sticky;
+		top: 46px;
+	}
+
+	&__nav-group {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	&__nav-heading {
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: #757575;
+		padding: 4px 12px;
+	}
+
+	&__nav-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 12px;
+		border-radius: 3px;
+		color: #1e1e1e;
+		text-decoration: none;
+		font-size: 13px;
+
+		svg {
+			fill: currentColor;
+		}
+
+		&:hover {
+			background: #f0f0f1;
+			color: var(--wp-admin-theme-color, #3858e9);
+		}
+
+		&.is-active {
+			background: var(--wp-admin-theme-color, #3858e9);
+			color: #fff;
+		}
+	}
+
+	&__create-index {
+		justify-content: flex-start;
+		width: 100%;
+	}
+
+	&__sidebar-footer {
+		margin-top: auto;
+		border-top: 1px solid #dcdcde;
+		padding-top: 12px;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		.components-button.is-link {
+			font-size: 12px;
+			text-decoration: none;
+		}
+	}
+
+	&__content {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__home-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+
+	&__home-filters {
+		display: flex;
+		gap: 12px;
+	}
+
+	&__stat-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 16px;
+		margin-block-end: 24px;
+	}
+
+	&__stat-card {
+		text-align: center;
+	}
+
+	&__stat-value {
+		font-size: 28px;
+		font-weight: 600;
+		line-height: 1.2;
+	}
+
+	&__stat-label {
+		color: #757575;
+		margin-top: 4px;
+	}
+
+	&__stat-help {
+		font-size: 11px;
+		color: #949494;
+		margin-top: 4px;
+	}
+
+	&__chart {
+		width: 100%;
+		height: auto;
+	}
+
+	&__chart-empty {
+		color: #757575;
+		padding: 24px;
+		text-align: center;
+		border: 1px dashed #dcdcde;
+		border-radius: 4px;
+	}
+
+	&__create-index-actions,
+	&__upgrade-modal-actions {
+		display: flex;
+		gap: 8px;
+		margin-top: 16px;
+	}
+
+	&__upgrade-modal-body {
+		display: flex;
+		gap: 12px;
+		align-items: flex-start;
+		max-width: 420px;
+
+		svg {
+			flex-shrink: 0;
+			fill: var(--wp-admin-theme-color, #3858e9);
+		}
+
+		p {
+			margin: 0;
+		}
+	}
+}

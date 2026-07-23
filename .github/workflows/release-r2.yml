@@ -1,0 +1,66 @@
+name: Upload Release Files To R2
+
+on:
+  push:
+    tags:
+      - "**"
+
+jobs:
+  upload-to-r2:
+    name: Upload Release Files To R2
+    runs-on: ubuntu-latest
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME: ${{ secrets.R2_RELEASES_BUCKET_NAME }}
+      R2_PUBLIC_URL: ${{ secrets.R2_RELEASES_PUBLIC_URL }}
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.10.0
+          cache: npm
+
+      - name: Validate release version matches plugin version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          release_version="${RELEASE_TAG#v}"
+          plugin_version="$(php -r "preg_match('/^[ \\t\/*#@]*Version:\\s*(.+)$/mi', file_get_contents('instantsearch-for-wp.php'), \$matches); echo trim(\$matches[1] ?? '');")"
+          if [ "$release_version" != "$plugin_version" ]; then
+            echo "Release tag $release_version does not match plugin version $plugin_version" >&2
+            exit 1
+          fi
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-dev
+
+      - name: Install Node.js dependencies and build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create release artifacts
+        run: |
+          mkdir -p "$RUNNER_TEMP/release-artifacts"
+          node scripts/package-release.mjs --output-dir "$RUNNER_TEMP/release-artifacts"
+          php scripts/build-update-metadata.php \
+            --download-url="${R2_PUBLIC_URL%/}/instantsearch-for-wp/instantsearch-for-wp.zip" \
+            --output="$RUNNER_TEMP/release-artifacts/info.json"
+
+      - name: Upload artifacts to Cloudflare R2
+        run: |
+          node scripts/upload-release-assets-to-r2.mjs --source-dir "$RUNNER_TEMP/release-artifacts"

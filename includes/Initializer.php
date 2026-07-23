@@ -30,6 +30,8 @@ class Initializer {
 	 */
 	public function __construct() {
 		Index::init();
+		Licensing::init();
+		add_action( 'init', array( Admin::class, 'register_v2_preference_meta' ) );
 		Indexer::get_instance();
 		new IndexingCriteria();
 		new PostExclusion();
@@ -38,6 +40,8 @@ class Initializer {
 
 		new Settings();
 		new Blocks();
+		new AgentChat();
+		new Updates();
 
 		// Initialize admin interface.
 		if ( is_admin() ) {
@@ -49,6 +53,7 @@ class Initializer {
 
 		if ( defined( 'REST_API_VERSION' ) ) {
 			new RestAPI();
+			new Analytics();
 		}
 	}
 

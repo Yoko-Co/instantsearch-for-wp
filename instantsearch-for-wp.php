@@ -21,6 +21,8 @@ define( 'INSTANTSEARCH_FOR_WP_PATH', __DIR__ );
 define( 'INSTANTSEARCH_FOR_WP_FILE', __FILE__ );
 define( 'INSTANTSEARCH_FOR_WP_VERSION', '1.0.1' );
 define( 'INSTANTSEARCH_FOR_WP_URL', plugin_dir_url( __FILE__ ) );
+// Pinned @algolia/sitesearch package version (vendored bundles in build/sitesearch).
+define( 'INSTANTSEARCH_FOR_WP_SITESEARCH_VERSION', '1.0.14' );
 
 if ( is_dir( plugin_dir_path( __FILE__ ) . '/vendor' ) ) {
 	require_once __DIR__ . '/vendor/woocommerce/action-scheduler/action-scheduler.php';

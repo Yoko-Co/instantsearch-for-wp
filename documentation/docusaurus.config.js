@@ -89,7 +89,7 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
-          {to: '/blog', label: 'Changelog', position: 'left'},
+          {href: 'https://github.com/Yoko-Co/yoko-core/releases', label: 'Changelog', position: 'left'},
 		  {
 			type: 'docsVersionDropdown',
 			position: 'right'
@@ -118,7 +118,7 @@ const config = {
             items: [
               {
                 label: 'Changelog',
-                to: '/blog',
+                href: 'https://github.com/Yoko-Co/yoko-core/releases',
               },
               {
                 label: 'GitHub',

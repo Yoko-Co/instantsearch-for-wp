@@ -2,6 +2,7 @@ import { marked } from 'marked';
 import { __ } from '@wordpress/i18n';
 
 const ASK_AI_BASE_URL = 'https://askai.algolia.com';
+const AGENT_STUDIO_ENGINE = 'agent_studio';
 const SUMMARY_PREFERENCE_KEY = 'isfwp_ai_summaries_enabled';
 
 const extractSummaryText = (payload) => {
@@ -287,6 +288,11 @@ const createSummaryRequestKey = (query, searchParameters) => `${query}::${stable
 
 export const createAiSummaryController = ({ container, frontendConfig }) => {
 	const aiSummariesConfig = frontendConfig?.aiSummaries || {};
+	// 'ask_ai' (default) is a one-shot Ask AI summary; 'agent_studio' streams a
+	// multi-step agentic answer from an Algolia AI (Agent) Studio agent.
+	const summaryEngine = aiSummariesConfig?.engine === AGENT_STUDIO_ENGINE
+		? AGENT_STUDIO_ENGINE
+		: 'ask_ai';
 	const summaryDisclaimer = typeof aiSummariesConfig?.disclaimer === 'string'
 		? aiSummariesConfig.disclaimer.trim()
 		: '';
@@ -475,6 +481,48 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		bindSummaryPreferenceToggles();
 	};
 
+	/**
+	 * Request a streamed completion from an Algolia AI (Agent) Studio agent.
+	 *
+	 * Unlike Ask AI there is no token handshake: the completions endpoint
+	 * authenticates with the search-only API key and streams the ai-sdk data
+	 * protocol, which the shared buffer parser already understands.
+	 */
+	const fetchAgentStudioResponse = async (query, searchParameters, signal) => {
+		const endpoint = `https://${frontendConfig.appId}.algolia.net/agent-studio/1/agents/${encodeURIComponent(aiSummariesConfig.agentId)}/completions?stream=true&compatibilityMode=ai-sdk-5`;
+
+		const body = {
+			messages: [
+				{
+					role: 'user',
+					parts: [
+						{
+							type: 'text',
+							text: query,
+						},
+					],
+				},
+			],
+		};
+
+		// The Agent Studio completions endpoint validates
+		// `algolia.searchParameters` against a strict allow-list and rejects the
+		// request when unsupported keys are present. Send no search parameters at
+		// all and let the agent apply its own configured search settings.
+
+		return fetch(endpoint, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Accept': 'text/event-stream',
+				'X-Algolia-Application-Id': frontendConfig.appId,
+				'X-Algolia-API-Key': frontendConfig.apiKey,
+			},
+			body: JSON.stringify(body),
+			signal,
+		});
+	};
+
 	const fetchToken = async (signal) => {
 		const tokenResponse = await fetch(`${ASK_AI_BASE_URL}/chat/token`, {
 			method: 'POST',
@@ -519,6 +567,7 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 
 		if (isDebugSearchParametersEnabled) {
 			console.info('ISFWP AI Summary request payload', {
+				engine: summaryEngine,
 				query,
 				searchParameters: activeSearchParameters,
 			});
@@ -528,35 +577,41 @@ export const createAiSummaryController = ({ container, frontendConfig }) => {
 		setSummaryState({ loading: true });
 
 		try {
-			const token = await fetchToken(summaryAbortController.signal);
-			const now = Date.now();
-			const chatId = `search-${now}`;
+			let response;
 
-			const response = await fetch(`${ASK_AI_BASE_URL}/chat`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Accept': 'text/event-stream',
-					'X-Algolia-Application-Id': frontendConfig.appId,
-					'X-Algolia-API-Key': frontendConfig.apiKey,
-					'X-Algolia-Index-Name': frontendConfig.indexName,
-					'X-Algolia-Assistant-Id': aiSummariesConfig.agentId,
-					'X-AI-SDK-Version': 'v4',
-					'Authorization': `TOKEN ${token}`,
-				},
-				body: JSON.stringify({
-					id: chatId,
-					messages: [
-						{
-							id: `message-${now}`,
-							role: 'user',
-							content: query,
-						}
-					],
-					searchParameters: activeSearchParameters,
-				}),
-				signal: summaryAbortController.signal,
-			});
+			if (summaryEngine === AGENT_STUDIO_ENGINE) {
+				response = await fetchAgentStudioResponse(query, activeSearchParameters, summaryAbortController.signal);
+			} else {
+				const token = await fetchToken(summaryAbortController.signal);
+				const now = Date.now();
+				const chatId = `search-${now}`;
+
+				response = await fetch(`${ASK_AI_BASE_URL}/chat`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Accept': 'text/event-stream',
+						'X-Algolia-Application-Id': frontendConfig.appId,
+						'X-Algolia-API-Key': frontendConfig.apiKey,
+						'X-Algolia-Index-Name': frontendConfig.indexName,
+						'X-Algolia-Assistant-Id': aiSummariesConfig.agentId,
+						'X-AI-SDK-Version': 'v4',
+						'Authorization': `TOKEN ${token}`,
+					},
+					body: JSON.stringify({
+						id: chatId,
+						messages: [
+							{
+								id: `message-${now}`,
+								role: 'user',
+								content: query,
+							}
+						],
+						searchParameters: activeSearchParameters,
+					}),
+					signal: summaryAbortController.signal,
+				});
+			}
 
 			if (!response.ok || !response.body) {
 				throw new Error(__('Unable to fetch AI summary.', 'instantsearch-for-wp'));

@@ -1,0 +1,42 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "instantsearch-for-wp/agent-chat",
+	"version": "1.0.0",
+	"title": "AI Agent Chat",
+	"description": "Embed an inline chat interface powered by an Algolia Agent Studio agent, with single-answer or full-conversation modes.",
+	"category": "instantsearch-for-wp",
+	"icon": "format-chat",
+	"keywords": [ "agent", "chat", "ai", "algolia", "agent studio", "assistant" ],
+	"textdomain": "instantsearch-for-wp",
+	"attributes": {
+		"metadata": { "type": "object" },
+		"mode": { "type": "string", "default": "conversation" },
+		"placeholder": { "type": "string", "default": "" },
+		"welcomeTitle": { "type": "string", "default": "" },
+		"welcomeMessage": { "type": "string", "default": "" },
+		"showRecommendedQuestions": { "type": "boolean", "default": true },
+		"useGlobalAgentId": { "type": "boolean", "default": true },
+		"customAgentId": { "type": "string", "default": "" },
+		"useGlobalApiKey": { "type": "boolean", "default": true },
+		"customApiKey": { "type": "string", "default": "" },
+		"backgroundColor": { "type": "string", "default": "" },
+		"textColor": { "type": "string", "default": "" },
+		"accentColor": { "type": "string", "default": "" },
+		"accentTextColor": { "type": "string", "default": "" },
+		"borderColor": { "type": "string", "default": "" },
+		"borderRadius": { "type": "number" },
+		"chatPadding": { "type": "number" },
+		"sendIcon": { "type": "string", "default": "paper-plane" }
+	},
+	"supports": {
+		"html": false,
+		"spacing": { "margin": true },
+		"typography": { "fontSize": true, "lineHeight": true },
+		"align": [ "wide", "full" ]
+	},
+	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js",
+	"style": "file:./style-index.css",
+	"render": "file:./render.php"
+}

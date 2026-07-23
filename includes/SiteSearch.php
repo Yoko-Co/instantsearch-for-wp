@@ -28,6 +28,18 @@ class SiteSearch {
 	}
 
 	/**
+	 * Whether an Algolia SiteSearch experience (rather than the built-in
+	 * InstantSearch.js UI) is active.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return bool
+	 */
+	public function is_sitesearch_experience() {
+		return 'instant_search' !== Settings::get_search_experience();
+	}
+
+	/**
 	 * Check if conversational search is enabled in settings.
 	 *
 	 * @return bool True if conversational search is enabled, false otherwise.
@@ -35,6 +47,72 @@ class SiteSearch {
 	public function is_conversational_search_enabled() {
 		$settings = Settings::get_settings();
 		return apply_filters( 'instantsearch_for_wp_conversational_search_enabled', $settings['conversational_search'] ?? true );
+	}
+
+	/**
+	 * Get the dedicated Ask AI agent ID for the built-in conversational
+	 * InstantSearch.js experience.
+	 *
+	 * @return string
+	 */
+	public function get_conversational_search_agent_id() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+		$agent_id = ! empty( $algolia['conversational_search_agent_id'] )
+			? sanitize_text_field( (string) $algolia['conversational_search_agent_id'] )
+			: '';
+
+		return (string) apply_filters( 'instantsearch_for_wp_conversational_search_agent_id', $agent_id );
+	}
+
+	/**
+	 * Whether the built-in conversational search experience is fully active.
+	 *
+	 * @return bool
+	 */
+	public function is_conversational_search_active() {
+		return $this->is_conversational_search_enabled() && '' !== $this->get_conversational_search_agent_id();
+	}
+
+	/**
+	 * Get the engine used to generate AI summaries.
+	 *
+	 * 'ask_ai' (default) uses Algolia Ask AI for a one-shot summary;
+	 * 'agent_studio' uses an Algolia AI (Agent) Studio agent for multi-step
+	 * agentic answers.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string Either 'ask_ai' or 'agent_studio'.
+	 */
+	public function get_ai_summaries_engine() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+		$engine   = isset( $algolia['ai_summaries_engine'] ) ? (string) $algolia['ai_summaries_engine'] : 'ask_ai';
+
+		if ( ! in_array( $engine, array( 'ask_ai', 'agent_studio' ), true ) ) {
+			$engine = 'ask_ai';
+		}
+
+		return (string) apply_filters( 'instantsearch_for_wp_ai_summaries_engine', $engine );
+	}
+
+	/**
+	 * Get the agent ID for the active AI summaries engine.
+	 *
+	 * @since 1.3.0
+	 *
+	 * @return string
+	 */
+	public function get_ai_summaries_agent_id() {
+		$settings = Settings::get_settings();
+		$algolia  = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+
+		$agent_id = 'agent_studio' === $this->get_ai_summaries_engine()
+			? ( $algolia['ai_studio_agent_id'] ?? '' )
+			: ( $algolia['ask_ai_agent_id'] ?? '' );
+
+		return sanitize_text_field( (string) $agent_id );
 	}
 
 	/**
@@ -51,7 +129,7 @@ class SiteSearch {
 
 		$algolia = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
 
-		return ! empty( $algolia['ai_summaries_enabled'] ) && ! empty( $algolia['ask_ai_agent_id'] );
+		return ! empty( $algolia['ai_summaries_enabled'] ) && '' !== $this->get_ai_summaries_agent_id();
 	}
 
 	/**
@@ -72,6 +150,14 @@ class SiteSearch {
 	 * @return void
 	 */
 	public function add_instantsearch_root_div() {
+		// Algolia SiteSearch experiences render their own DOM into a simple
+		// mount node; the built-in scaffold below is not used.
+		if ( $this->is_sitesearch_experience() ) {
+			// Fallback mount used when no Search Button block is on the page.
+			echo '<div id="isfwp-sitesearch-root" data-isfwp-sitesearch="root"></div>';
+			return;
+		}
+
 		$settings       = Settings::get_settings();
 		$search_classes = array();
 
@@ -93,7 +179,7 @@ class SiteSearch {
 			$logo_url = $image[0];
 		}
 
-		$is_conversational_search = $this->is_conversational_search_enabled();
+		$is_conversational_search = $this->is_conversational_search_active();
 		$is_ai_summaries_enabled  = $this->is_ai_summaries_enabled();
 		$show_powered_by_algolia  = $this->should_render_powered_by_algolia();
 		?>
@@ -133,6 +219,7 @@ class SiteSearch {
 			</div>
 		</div>
 		<?php if ( $is_conversational_search ) : ?>
+			<div id="algolia-chat-trigger"></div>
 			<div id="algolia-chat"></div>
 		<?php endif; ?>
 		<?php
@@ -145,7 +232,18 @@ class SiteSearch {
 	 */
 	public function add_search_trigger_button() {
 
-		$is_conversational_search = $this->is_conversational_search_enabled();
+		// SiteSearch experiences render their own trigger button.
+		if ( $this->is_sitesearch_experience() ) {
+			return;
+		}
+
+		$settings = Settings::get_settings();
+		$hide_floating_search_button = ! empty( $settings['sitesearch_settings']['hide_floating_search_button'] );
+		if ( $hide_floating_search_button ) {
+			return;
+		}
+
+		$is_conversational_search = $this->is_conversational_search_active();
 		// Only show the search trigger if conversational search is disabled, or if it's enabled but the user hasn't opted to hide the trigger.
 		if ( $is_conversational_search && apply_filters( 'instantsearch_for_wp_hide_search_trigger_with_conversational_search', true ) ) {
 			return;
@@ -188,12 +286,14 @@ class SiteSearch {
 				),
 				'searchTriggerQuerySelectors' => $settings['sitesearch_settings']['trigger_selectors'] ?? '.isfwp-search-trigger,.menu-item .fl-search-form .fl-button-wrap > a,.swp-input--search',
 				'sitesearchSettings'          => $settings['sitesearch_settings'] ?? array(),
-				'conversationalSearch'        => $this->is_conversational_search_enabled()
-					? apply_filters( 'instantsearch_for_wp_conversational_search_agent_id', null )
+				'conversationalChatTriggerPosition' => $settings['sitesearch_settings']['chat_trigger_position'] ?? 'right',
+				'conversationalSearch'        => $this->is_conversational_search_active()
+					? $this->get_conversational_search_agent_id()
 					: false,
 				'aiSummaries'                 => array(
 					'enabled'  => $this->is_ai_summaries_enabled(),
-					'agentId'  => $settings['algolia']['ask_ai_agent_id'] ?? '',
+					'engine'   => $this->get_ai_summaries_engine(),
+					'agentId'  => $this->get_ai_summaries_agent_id(),
 					'disclaimer' => $settings['algolia']['ai_disclaimer'] ?? '',
 				),
 			)
@@ -206,6 +306,11 @@ class SiteSearch {
 	 * @return void
 	 */
 	public function enqueue_scripts() {
+		if ( $this->is_sitesearch_experience() ) {
+			$this->enqueue_sitesearch_assets();
+			return;
+		}
+
 		$instantsearch_script_path = INSTANTSEARCH_FOR_WP_PATH . '/build/instantsearch.js';
 		if ( ! file_exists( $instantsearch_script_path ) ) {
 			return;
@@ -264,5 +369,185 @@ class SiteSearch {
 			$selectors        = array_merge( $selectors, $custom_selectors );
 		}
 		return $selectors;
+	}
+
+	/**
+	 * Build the init configuration for the active Algolia SiteSearch
+	 * experience. Only the search-only API key is ever included — the config
+	 * is printed in the page source.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return array
+	 */
+	public function get_sitesearch_config() {
+		$settings   = Settings::get_settings();
+		$experience = Settings::get_search_experience();
+		$algolia    = isset( $settings['algolia'] ) && is_array( $settings['algolia'] ) ? $settings['algolia'] : array();
+		$options    = wp_parse_args(
+			isset( $settings['sitesearch_options'] ) && is_array( $settings['sitesearch_options'] ) ? $settings['sitesearch_options'] : array(),
+			Settings::get_default_sitesearch_options()
+		);
+
+		/**
+		 * Filters normalized SiteSearch options before frontend config assembly.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param array  $options    SiteSearch options.
+		 * @param array  $settings   Full plugin settings.
+		 * @param string $experience Active SiteSearch experience.
+		 */
+		$options = apply_filters( 'instantsearch_for_wp_sitesearch_options', $options, $settings, $experience );
+
+		$app_id = ! empty( $algolia['app_id'] ) ? $algolia['app_id'] : '';
+		if ( defined( 'ALGOLIA_APP_ID' ) && ALGOLIA_APP_ID ) {
+			$app_id = ALGOLIA_APP_ID;
+		}
+
+		// Search-only key exclusively; never fall back to the admin key here.
+		$search_key = ! empty( $algolia['search_only_api_key'] ) ? $algolia['search_only_api_key'] : '';
+		if ( defined( 'ALGOLIA_SEARCH_ONLY_API_KEY' ) && ALGOLIA_SEARCH_ONLY_API_KEY ) {
+			$search_key = ALGOLIA_SEARCH_ONLY_API_KEY;
+		}
+		$search_key = apply_filters( 'instantsearch_for_wp_algolia_search_only_api_key', $search_key );
+
+		$attributes = isset( $options['attributes'] ) && is_array( $options['attributes'] ) ? $options['attributes'] : array();
+
+		/**
+		 * Filters SiteSearch attribute mapping before it is converted to
+		 * frontend config keys.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param array  $attributes Raw SiteSearch attributes option.
+		 * @param array  $options    Normalized SiteSearch options.
+		 * @param string $experience Active SiteSearch experience.
+		 */
+		$attributes = apply_filters( 'instantsearch_for_wp_sitesearch_attributes', $attributes, $options, $experience );
+
+		$attributes = wp_parse_args(
+			is_array( $attributes ) ? $attributes : array(),
+			array(
+				'primary_text'   => 'title',
+				'secondary_text' => 'excerpt',
+				'tertiary_text'  => 'post_type',
+				'url'            => 'url',
+				'image'          => 'image',
+			)
+		);
+
+		$config = array(
+			'experience'             => $experience,
+			'jsGlobal'               => Settings::get_sitesearch_bundle( $experience, 'global' ),
+			'applicationId'          => $app_id,
+			'apiKey'                 => $search_key,
+			'indexName'              => Settings::get_index_name( ! empty( $settings['use_as_sitesearch'] ) ? $settings['use_as_sitesearch'] : null ),
+			'attributes'             => array(
+				'primaryText'   => $attributes['primary_text'],
+				'secondaryText' => $attributes['secondary_text'],
+				'tertiaryText'  => $attributes['tertiary_text'],
+				'url'           => $attributes['url'],
+				'image'         => $attributes['image'],
+			),
+			'placeholder'            => $options['placeholder_text'],
+			'buttonText'             => $options['button_text'],
+			'hitsPerPage'            => (int) $options['hits_per_page'],
+			'darkMode'               => $options['dark_mode'],
+			'insights'               => (bool) $options['insights'],
+			'triggerSelectors'       => $settings['sitesearch_settings']['trigger_selectors'] ?? '',
+		);
+
+		if ( in_array( $experience, array( 'sitesearch_askai', 'sitesearch_sidepanel' ), true ) ) {
+			$config['assistantId']               = $algolia['ask_ai_agent_id'] ?? '';
+			$config['agentStudio']               = (bool) $options['agent_studio'];
+			$config['suggestedQuestionsEnabled'] = (bool) $options['suggested_questions_enabled'];
+		}
+
+		/**
+		 * Filters the Algolia SiteSearch init configuration.
+		 *
+		 * @since 1.2.0
+		 *
+		 * @param array  $config     Init configuration passed to the frontend.
+		 * @param string $experience Active experience.
+		 */
+		return apply_filters( 'instantsearch_for_wp_sitesearch_config', $config, $experience );
+	}
+
+	/**
+	 * Enqueue the vendored Algolia SiteSearch bundle plus the plugin's init
+	 * and trigger-proxy script.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @return void
+	 */
+	private function enqueue_sitesearch_assets() {
+		$experience = Settings::get_search_experience();
+		$bundle     = Settings::get_sitesearch_bundle( $experience );
+
+		if ( ! $bundle ) {
+			return;
+		}
+
+		$bundle_path = INSTANTSEARCH_FOR_WP_PATH . '/build/sitesearch/' . $bundle;
+		$bundle_url  = INSTANTSEARCH_FOR_WP_URL . 'build/sitesearch/' . $bundle;
+
+		if ( ! file_exists( $bundle_path . '.min.js' ) ) {
+			return;
+		}
+
+		// Vendored library bundle (self-contained UMD, includes React).
+		wp_enqueue_script(
+			'instantsearch-for-wp-sitesearch-lib',
+			$bundle_url . '.min.js',
+			array(),
+			INSTANTSEARCH_FOR_WP_SITESEARCH_VERSION,
+			true
+		);
+
+		if ( file_exists( $bundle_path . '.min.css' ) ) {
+			wp_enqueue_style(
+				'instantsearch-for-wp-sitesearch-lib',
+				$bundle_url . '.min.css',
+				array(),
+				INSTANTSEARCH_FOR_WP_SITESEARCH_VERSION
+			);
+		}
+
+		// Plugin glue: init on block mounts / footer root, dark-mode auto,
+		// legacy trigger-selector proxying.
+		$frontend_script = INSTANTSEARCH_FOR_WP_PATH . '/build/sitesearch-frontend.js';
+		if ( ! file_exists( $frontend_script ) ) {
+			return;
+		}
+
+		$asset_file = INSTANTSEARCH_FOR_WP_PATH . '/build/sitesearch-frontend.asset.php';
+		$asset      = file_exists( $asset_file ) ? require $asset_file : array();
+
+		wp_enqueue_script(
+			'instantsearch-for-wp-sitesearch',
+			INSTANTSEARCH_FOR_WP_URL . 'build/sitesearch-frontend.js',
+			array_merge( $asset['dependencies'] ?? array(), array( 'instantsearch-for-wp-sitesearch-lib' ) ),
+			$asset['version'] ?? INSTANTSEARCH_FOR_WP_VERSION,
+			true
+		);
+
+		$frontend_style = INSTANTSEARCH_FOR_WP_PATH . '/build/sitesearch-frontend.css';
+		if ( file_exists( $frontend_style ) ) {
+			wp_enqueue_style(
+				'instantsearch-for-wp-sitesearch-overrides',
+				INSTANTSEARCH_FOR_WP_URL . 'build/sitesearch-frontend.css',
+				array( 'instantsearch-for-wp-sitesearch-lib' ),
+				$asset['version'] ?? INSTANTSEARCH_FOR_WP_VERSION
+			);
+		}
+
+		wp_localize_script(
+			'instantsearch-for-wp-sitesearch',
+			'instantSearchForWPSiteSearch',
+			$this->get_sitesearch_config()
+		);
 	}
 }
